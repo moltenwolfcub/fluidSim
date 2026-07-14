@@ -8,6 +8,7 @@ import (
 const (
 	numSubSteps   int     = 1
 	pressureIters int     = 3
+	flipRatio     float64 = 0.9
 	gravity       float64 = -9.81 //ms^-2
 
 	Width      float64 = 4   //m
@@ -57,7 +58,7 @@ type Simulation struct {
 func NewSimulation() *Simulation {
 	s := Simulation{}
 	s.particles = make([]Particle, 0)
-	s.addRandomParticles(100)
+	s.addRandomParticles(1000)
 
 	totalCells := cellsW * cellsH
 
@@ -100,6 +101,7 @@ func (s *Simulation) Simulate(dt float64) {
 		s.handleWallCollisions()
 		s.transferVelocityToGrid()
 		s.solveIncompressibility()
+		s.transferVelocityToParticles()
 	}
 
 }
@@ -353,6 +355,166 @@ func (s *Simulation) solveIncompressibility() {
 					s.grid[down].v += p
 				}
 			}
+		}
+	}
+}
+
+func (s *Simulation) transferVelocityToParticles() {
+
+	// x-component
+	for i := range s.particles {
+		c := s.particleToCell(s.particles[i])
+		dx := s.particles[i].pos[0] - float64(c.coord[0])*gridSize
+		dy := s.particles[i].pos[1] - float64(c.coord[1])*gridSize
+
+		rightNeighbour := c.coord[1]*cellsW + c.coord[0] + 1
+		var verticalNeighbour int
+		var verticalRightNeighbour int
+		inUpper := dy < gridSize/2
+		if inUpper {
+			targetY := max(c.coord[1]-1, 0)
+
+			verticalNeighbour = targetY*cellsW + c.coord[0]
+			verticalRightNeighbour = targetY*cellsW + c.coord[0] + 1
+		} else {
+			targetY := min(c.coord[1]+1, cellsH-1)
+
+			verticalNeighbour = targetY*cellsW + c.coord[0]
+			verticalRightNeighbour = targetY*cellsW + c.coord[0] + 1
+		}
+
+		var c1, c2, c3, c4 int
+		var ty float64
+		tx := dx / gridSize
+
+		if inUpper {
+			c1 = c.coord[1]*cellsW + c.coord[0]
+			c2 = rightNeighbour
+			c3 = verticalRightNeighbour
+			c4 = verticalNeighbour
+
+			ty = (dy / gridSize) + 0.5
+		} else {
+			c1 = verticalNeighbour
+			c2 = verticalRightNeighbour
+			c3 = rightNeighbour
+			c4 = c.coord[1]*cellsW + c.coord[0]
+
+			ty = (dy / gridSize) - 0.5
+		}
+
+		w1 := (1 - tx) * (ty)
+		w2 := (tx) * (ty)
+		w3 := (tx) * (1 - ty)
+		w4 := (1 - tx) * (1 - ty)
+
+		pVelX := s.particles[i].vel[0]
+
+		valid1, valid2, valid3, valid4 := 0.0, 0.0, 0.0, 0.0
+		if s.grid[c1].cellType != Air || (c1 > 0 && s.grid[c1-1].cellType != Air) {
+			valid1 = 1
+		}
+		if s.grid[c2].cellType != Air || (c2 > 0 && s.grid[c2-1].cellType != Air) {
+			valid2 = 1
+		}
+		if s.grid[c3].cellType != Air || (c3 > 0 && s.grid[c3-1].cellType != Air) {
+			valid3 = 1
+		}
+		if s.grid[c4].cellType != Air || (c4 > 0 && s.grid[c4-1].cellType != Air) {
+			valid4 = 1
+		}
+		w := valid1*w1 + valid2*w2 + valid3*w3 + valid4*w4
+
+		if w > 0 {
+			picV := (valid1*w1*s.grid[c1].u +
+				valid2*w2*s.grid[c2].u +
+				valid3*w3*s.grid[c3].u +
+				valid4*w4*s.grid[c4].u) / w
+			corr := (valid1*w1*(s.grid[c1].u-s.grid[c1].prevU) +
+				valid2*w2*(s.grid[c2].u-s.grid[c2].prevU) +
+				valid3*w3*(s.grid[c3].u-s.grid[c3].prevU) +
+				valid4*w4*(s.grid[c4].u-s.grid[c4].prevU)) / w
+			flipV := pVelX + corr
+
+			s.particles[i].vel[0] = (1.0-flipRatio)*picV + flipRatio*flipV
+		}
+	}
+	// y-component
+	for i := range s.particles {
+		c := s.particleToCell(s.particles[i])
+		dx := s.particles[i].pos[0] - float64(c.coord[0])*gridSize
+		dy := s.particles[i].pos[1] - float64(c.coord[1])*gridSize
+
+		belowNeighbour := (c.coord[1]+1)*cellsW + c.coord[0]
+		var horizontalNeighbour int
+		var horizontalBelowNeighbour int
+		inLeft := dx < gridSize/2
+		if inLeft {
+			targetX := max(c.coord[0]-1, 0)
+
+			horizontalNeighbour = c.coord[1]*cellsW + targetX
+			horizontalBelowNeighbour = (c.coord[1]+1)*cellsW + targetX
+		} else {
+			targetX := min(c.coord[0]+1, cellsW-1)
+
+			horizontalNeighbour = c.coord[1]*cellsW + targetX
+			horizontalBelowNeighbour = (c.coord[1]+1)*cellsW + targetX
+		}
+
+		var c1, c2, c3, c4 int
+		var tx float64
+		ty := dy / gridSize
+
+		if inLeft {
+			c1 = horizontalBelowNeighbour
+			c2 = belowNeighbour
+			c3 = c.coord[1]*cellsW + c.coord[0]
+			c4 = horizontalNeighbour
+
+			tx = (dx / gridSize) + 0.5
+		} else {
+			c1 = belowNeighbour
+			c2 = horizontalBelowNeighbour
+			c3 = horizontalNeighbour
+			c4 = c.coord[1]*cellsW + c.coord[0]
+
+			tx = (dx / gridSize) - 0.5
+		}
+
+		w1 := (1 - tx) * (ty)
+		w2 := (tx) * (ty)
+		w3 := (tx) * (1 - ty)
+		w4 := (1 - tx) * (1 - ty)
+
+		pVelY := s.particles[i].vel[1]
+
+		valid1, valid2, valid3, valid4 := 0.0, 0.0, 0.0, 0.0
+		if s.grid[c1].cellType != Air || (c1 >= cellsW && s.grid[c1-cellsW].cellType != Air) {
+			valid1 = 1
+		}
+		if s.grid[c2].cellType != Air || (c2 >= cellsW && s.grid[c2-cellsW].cellType != Air) {
+			valid2 = 1
+		}
+		if s.grid[c3].cellType != Air || (c3 >= cellsW && s.grid[c3-cellsW].cellType != Air) {
+			valid3 = 1
+		}
+		if s.grid[c4].cellType != Air || (c4 >= cellsW && s.grid[c4-cellsW].cellType != Air) {
+			valid4 = 1
+		}
+		w := valid1*w1 + valid2*w2 + valid3*w3 + valid4*w4
+
+		if w > 0 {
+			picV := (valid1*w1*s.grid[c1].v +
+				valid2*w2*s.grid[c2].v +
+				valid3*w3*s.grid[c3].v +
+				valid4*w4*s.grid[c4].v) / w
+			corr := (valid1*w1*(s.grid[c1].v-s.grid[c1].prevV) +
+				valid2*w2*(s.grid[c2].v-s.grid[c2].prevV) +
+				valid3*w3*(s.grid[c3].v-s.grid[c3].prevV) +
+				valid4*w4*(s.grid[c4].v-s.grid[c4].prevV)) / w
+			flipV := pVelY + corr
+
+			s.particles[i].vel[1] = (1.0-flipRatio)*picV + flipRatio*flipV
 		}
 	}
 }
