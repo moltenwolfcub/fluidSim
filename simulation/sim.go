@@ -74,7 +74,7 @@ func NewSimulation() *Simulation {
 				v:        0,
 			}
 			c.canContainFluid = true
-			if i == 0 || i == cellsW-1 || j == 0 {
+			if i == 0 || i == cellsW-1 || j == cellsH-1 {
 				c.canContainFluid = false
 				c.cellType = Solid
 			}
@@ -89,7 +89,8 @@ func NewSimulation() *Simulation {
 func (s *Simulation) addRandomParticles(count int) {
 	for range count {
 		s.particles = append(s.particles, Particle{
-			pos: [2]float64{rand.Float64() * Width, rand.Float64() * Height},
+			pos: [2]float64{1 + rand.Float64()*2, rand.Float64() * 1},
+			// pos: [2]float64{rand.Float64() * Width, rand.Float64() * Height},
 			vel: [2]float64{0, 0},
 		})
 	}
