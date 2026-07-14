@@ -10,6 +10,7 @@ const (
 	pressureIters  int     = 30
 	flipRatio      float64 = 0.9
 	overrelaxation float64 = 1.9
+	particleCount  int     = 2000
 	gravity        float64 = -9.81 //ms^-2
 
 	Width      float64 = 4   //m
@@ -59,7 +60,7 @@ type Simulation struct {
 func NewSimulation() *Simulation {
 	s := Simulation{}
 	s.particles = make([]Particle, 0)
-	s.addRandomParticles(1000)
+	s.addRandomParticles(particleCount)
 
 	totalCells := cellsW * cellsH
 
@@ -351,10 +352,10 @@ func (s *Simulation) solveIncompressibility() {
 					s.grid[center].u += p
 				}
 				if s.grid[up].canContainFluid {
-					s.grid[center].v -= p
+					s.grid[center].v += p
 				}
 				if s.grid[down].canContainFluid {
-					s.grid[down].v += p
+					s.grid[down].v -= p
 				}
 			}
 		}
