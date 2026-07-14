@@ -176,10 +176,7 @@ func (s *Simulation) transferVelocityToGrid() {
 			verticalNeighbour = targetY*cellsW + c.coord[0]
 			verticalRightNeighbour = targetY*cellsW + c.coord[0] + 1
 		} else {
-			targetY := c.coord[1] + 1
-			if targetY >= cellsH {
-				targetY = cellsH - 1
-			}
+			targetY := min(c.coord[1]+1, cellsH-1)
 
 			verticalNeighbour = targetY*cellsW + c.coord[0]
 			verticalRightNeighbour = targetY*cellsW + c.coord[0] + 1
@@ -222,9 +219,71 @@ func (s *Simulation) transferVelocityToGrid() {
 		s.grid[c3].du += w3
 		s.grid[c4].du += w4
 	}
+	// y-component
+	for i := range s.particles {
+		c := s.particleToCell(s.particles[i])
+		dx := s.particles[i].pos[0] - float64(c.coord[0])*gridSize
+		dy := s.particles[i].pos[1] - float64(c.coord[1])*gridSize
+
+		belowNeighbour := (c.coord[1]+1)*cellsW + c.coord[0]
+		var horizontalNeighbour int
+		var horizontalBelowNeighbour int
+		inLeft := dx < gridSize/2
+		if inLeft {
+			targetX := max(c.coord[0]-1, 0)
+
+			horizontalNeighbour = c.coord[1]*cellsW + targetX
+			horizontalBelowNeighbour = (c.coord[1]+1)*cellsW + targetX
+		} else {
+			targetX := min(c.coord[0]+1, cellsW-1)
+
+			horizontalNeighbour = c.coord[1]*cellsW + targetX
+			horizontalBelowNeighbour = (c.coord[1]+1)*cellsW + targetX
+		}
+
+		var c1, c2, c3, c4 int
+		var tx float64
+		ty := dy / gridSize
+
+		if inLeft {
+			c1 = horizontalBelowNeighbour
+			c2 = belowNeighbour
+			c3 = c.coord[1]*cellsW + c.coord[0]
+			c4 = horizontalNeighbour
+
+			tx = (dx / gridSize) + 0.5
+		} else {
+			c1 = belowNeighbour
+			c2 = horizontalBelowNeighbour
+			c3 = horizontalNeighbour
+			c4 = c.coord[1]*cellsW + c.coord[0]
+
+			tx = (dx / gridSize) - 0.5
+		}
+
+		w1 := (1 - tx) * (ty)
+		w2 := (tx) * (ty)
+		w3 := (tx) * (1 - ty)
+		w4 := (1 - tx) * (1 - ty)
+
+		pVelY := s.particles[i].vel[1]
+
+		s.grid[c1].v += w1 * pVelY
+		s.grid[c2].v += w2 * pVelY
+		s.grid[c3].v += w3 * pVelY
+		s.grid[c4].v += w4 * pVelY
+
+		s.grid[c1].dv += w1
+		s.grid[c2].dv += w2
+		s.grid[c3].dv += w3
+		s.grid[c4].dv += w4
+	}
 	for i := range s.grid {
 		if s.grid[i].du > 0 {
 			s.grid[i].u /= s.grid[i].du
+		}
+		if s.grid[i].dv > 0 {
+			s.grid[i].v /= s.grid[i].dv
 		}
 	}
 	for i := range s.grid { //revert solid edges to previous velocity
