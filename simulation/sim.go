@@ -6,10 +6,11 @@ import (
 )
 
 const (
-	numSubSteps   int     = 1
-	pressureIters int     = 30
-	flipRatio     float64 = 0.9
-	gravity       float64 = -9.81 //ms^-2
+	numSubSteps    int     = 1
+	pressureIters  int     = 30
+	flipRatio      float64 = 0.9
+	overrelaxation float64 = 1.9
+	gravity        float64 = -9.81 //ms^-2
 
 	Width      float64 = 4   //m
 	Height     float64 = 3   //m
@@ -340,7 +341,8 @@ func (s *Simulation) solveIncompressibility() {
 				//TODO drift compensation
 
 				p := divergence / float64(openNeighbours)
-				//TODO overrelaxation
+
+				p *= overrelaxation
 
 				if s.grid[right].canContainFluid {
 					s.grid[right].u -= p
