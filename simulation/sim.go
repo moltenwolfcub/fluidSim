@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	numSubSteps int     = 1
-	gravity     float64 = -9.81 //ms^-2
+	numSubSteps   int     = 1
+	pressureIters int     = 3
+	gravity       float64 = -9.81 //ms^-2
 
 	Width      float64 = 4   //m
 	Height     float64 = 3   //m
@@ -98,6 +99,7 @@ func (s *Simulation) Simulate(dt float64) {
 		s.integrateParticles(sdt)
 		s.handleWallCollisions()
 		s.transferVelocityToGrid()
+		s.solveIncompressibility()
 	}
 
 }
@@ -292,6 +294,65 @@ func (s *Simulation) transferVelocityToGrid() {
 		}
 		if !s.grid[i].canContainFluid || (s.grid[i].coord[1] > 0 && !s.grid[(s.grid[i].coord[1]-1)*cellsW+s.grid[i].coord[0]].canContainFluid) {
 			s.grid[i].v = s.grid[i].prevV
+		}
+	}
+}
+
+func (s *Simulation) solveIncompressibility() {
+	for i := range s.grid {
+		s.grid[i].prevU = s.grid[i].u
+		s.grid[i].prevV = s.grid[i].v
+	}
+
+	for range pressureIters {
+		for j := 1; j < cellsH-1; j++ {
+			for i := 1; i < cellsW-1; i++ {
+				if s.grid[j*cellsW+i].cellType != Water {
+					continue
+				}
+
+				center := j*cellsW + i
+				up := (j-1)*cellsW + i
+				down := (j+1)*cellsW + i
+				left := j*cellsW + i - 1
+				right := j*cellsW + i + 1
+
+				openNeighbours := 0
+				if s.grid[up].canContainFluid {
+					openNeighbours++
+				}
+				if s.grid[down].canContainFluid {
+					openNeighbours++
+				}
+				if s.grid[left].canContainFluid {
+					openNeighbours++
+				}
+				if s.grid[right].canContainFluid {
+					openNeighbours++
+				}
+				if openNeighbours == 0 {
+					continue
+				}
+
+				divergence := s.grid[right].u - s.grid[center].u + s.grid[center].v - s.grid[down].v
+				//TODO drift compensation
+
+				p := divergence / float64(openNeighbours)
+				//TODO overrelaxation
+
+				if s.grid[right].canContainFluid {
+					s.grid[right].u -= p
+				}
+				if s.grid[left].canContainFluid {
+					s.grid[center].u += p
+				}
+				if s.grid[up].canContainFluid {
+					s.grid[center].v -= p
+				}
+				if s.grid[down].canContainFluid {
+					s.grid[down].v += p
+				}
+			}
 		}
 	}
 }
