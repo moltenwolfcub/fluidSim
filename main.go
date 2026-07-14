@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"github.com/moltenwolfcub/fluidSim/render"
+	"github.com/moltenwolfcub/fluidSim/simulation"
+)
 
 func main() {
-	fmt.Println("hello fluid sim")
+	sim := simulation.NewSimulation()
+	render := render.NewRenderer(sim)
+
+	render.Run()
 }
