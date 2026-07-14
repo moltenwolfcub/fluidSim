@@ -1,16 +1,18 @@
 package simulation
 
 import (
+	"math"
 	"math/rand"
 )
 
 const (
 	numSubSteps int     = 1
-	gravity     float64 = -9.81
+	gravity     float64 = -9.81 //ms^-2
 
-	gridSize float64 = 50
-	Width    float64 = 1600
-	Height   float64 = 900
+	Width      float64 = 4   //m
+	Height     float64 = 3   //m
+	resolution float64 = 100 // total cells vertically
+	gridSize   float64 = Height / resolution
 
 	Radius float64 = 5
 )
@@ -48,8 +50,8 @@ func NewSimulation() *Simulation {
 	s.particles = make([]Particle, 0)
 	s.addRandomParticles(100)
 
-	cellsW := int(Width/gridSize) + 1
-	cellsH := int(Height/gridSize) + 1
+	cellsW := int(math.Floor(Width/gridSize)) + 1
+	cellsH := int(math.Floor(Height/gridSize)) + 1
 	totalCells := cellsW * cellsH
 
 	s.grid = make([]cell, totalCells)
