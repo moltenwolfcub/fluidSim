@@ -160,7 +160,7 @@ func (s *Simulation) transferVelocityToGrid() {
 	for i := range s.particles {
 		cell := s.particleToCell(s.particles[i])
 		if cell.cellType == Air {
-			cell.cellType = Water
+			s.grid[cell.coord[1]*cellsW+cell.coord[0]].cellType = Water
 		}
 	}
 
@@ -336,7 +336,7 @@ func (s *Simulation) solveIncompressibility() {
 					continue
 				}
 
-				divergence := s.grid[right].u - s.grid[center].u + s.grid[center].v - s.grid[down].v
+				divergence := s.grid[right].u - s.grid[center].u + s.grid[down].v - s.grid[center].v
 				//TODO drift compensation
 
 				p := divergence / float64(openNeighbours)
@@ -349,10 +349,10 @@ func (s *Simulation) solveIncompressibility() {
 					s.grid[center].u += p
 				}
 				if s.grid[up].canContainFluid {
-					s.grid[center].v -= p
+					s.grid[center].v += p
 				}
 				if s.grid[down].canContainFluid {
-					s.grid[down].v += p
+					s.grid[down].v -= p
 				}
 			}
 		}
