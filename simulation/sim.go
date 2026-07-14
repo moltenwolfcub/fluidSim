@@ -74,7 +74,7 @@ func NewSimulation() *Simulation {
 				v:        0,
 			}
 			c.canContainFluid = true
-			if i == 0 || i == cellsW-1 || j == cellsH-1 {
+			if i == 0 || i == cellsW-1 || j == cellsH-1 || j == 0 {
 				c.canContainFluid = false
 				c.cellType = Solid
 			}
