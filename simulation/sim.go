@@ -1,8 +1,13 @@
 package simulation
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 const (
+	numSubSteps int     = 1
+	gravity     float64 = -9.81
+
 	gridSize float64 = 50
 	Width    float64 = 1600
 	Height   float64 = 900
@@ -48,8 +53,8 @@ func NewSimulation() *Simulation {
 	totalCells := cellsW * cellsH
 
 	s.grid = make([]cell, totalCells)
-	for j := 0; j < cellsH; j++ {
-		for i := 0; i < cellsW; i++ {
+	for j := range cellsH {
+		for i := range cellsW {
 			c := cell{
 				// cellType: Air,
 				coord: [2]int{i, j},
@@ -73,6 +78,24 @@ func (s *Simulation) addRandomParticles(count int) {
 	}
 }
 
+func (s *Simulation) Simulate(dt float64) {
+	sdt := dt / float64(numSubSteps)
+
+	for range numSubSteps {
+		s.integrateParticles(sdt)
+	}
+
+}
+
 func (s Simulation) GetParticles() []Particle {
 	return s.particles
+}
+
+func (s *Simulation) integrateParticles(dt float64) {
+	for i := range s.particles {
+		s.particles[i].vel[1] += dt * -gravity
+
+		s.particles[i].pos[0] += s.particles[i].vel[0] * dt
+		s.particles[i].pos[1] += s.particles[i].vel[1] * dt
+	}
 }

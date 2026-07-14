@@ -39,6 +39,7 @@ func (g *Renderer) Layout(outsideWidth, outsideHeight int) (screenWidth, screenH
 }
 
 func (g *Renderer) Update() error {
+	g.sim.Simulate(1 / float64(TPS))
 	return nil
 }
 
