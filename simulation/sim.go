@@ -7,7 +7,7 @@ import (
 
 const (
 	numSubSteps   int     = 1
-	pressureIters int     = 3
+	pressureIters int     = 30
 	flipRatio     float64 = 0.9
 	gravity       float64 = -9.81 //ms^-2
 
@@ -349,10 +349,10 @@ func (s *Simulation) solveIncompressibility() {
 					s.grid[center].u += p
 				}
 				if s.grid[up].canContainFluid {
-					s.grid[center].v += p
+					s.grid[center].v -= p
 				}
 				if s.grid[down].canContainFluid {
-					s.grid[down].v -= p
+					s.grid[down].v += p
 				}
 			}
 		}
