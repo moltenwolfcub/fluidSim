@@ -44,6 +44,7 @@ func (g *Renderer) Update() error {
 }
 
 func (g *Renderer) Draw(screen *ebiten.Image) {
+	screen.Fill(color.RGBA{14, 30, 39, 255})
 	for _, p := range g.sim.GetParticles() {
 		g.drawParticle(screen, p)
 	}
