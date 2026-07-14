@@ -14,7 +14,7 @@ const (
 	resolution float64 = 100 // total cells vertically
 	gridSize   float64 = Height / resolution
 
-	Radius float64 = 5
+	Radius float64 = 0.025 //m
 )
 
 type Particle struct {
@@ -85,6 +85,7 @@ func (s *Simulation) Simulate(dt float64) {
 
 	for range numSubSteps {
 		s.integrateParticles(sdt)
+		s.handleWallCollisions()
 	}
 
 }
@@ -99,5 +100,27 @@ func (s *Simulation) integrateParticles(dt float64) {
 
 		s.particles[i].pos[0] += s.particles[i].vel[0] * dt
 		s.particles[i].pos[1] += s.particles[i].vel[1] * dt
+	}
+}
+
+func (s *Simulation) handleWallCollisions() {
+	for i := range s.particles {
+		x, y := s.particles[i].GetPos()
+
+		if x < Radius {
+			s.particles[i].pos[0] = Radius
+			s.particles[i].vel[0] = 0
+		} else if x > Width-Radius {
+			s.particles[i].pos[0] = Width - Radius
+			s.particles[i].vel[0] = 0
+		}
+
+		if y < Radius {
+			s.particles[i].pos[1] = Radius
+			s.particles[i].vel[1] = 0
+		} else if y > Height-Radius {
+			s.particles[i].pos[1] = Height - Radius
+			s.particles[i].vel[1] = 0
+		}
 	}
 }

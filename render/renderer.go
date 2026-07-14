@@ -53,7 +53,7 @@ func (g *Renderer) Draw(screen *ebiten.Image) {
 func (g *Renderer) drawParticle(screen *ebiten.Image, p simulation.Particle) {
 	x, y := SimToRenderCoords(p.GetPos())
 
-	vector.FillCircle(screen, float32(x), float32(y), float32(simulation.Radius), color.RGBA{71, 155, 203, 255}, true)
+	vector.FillCircle(screen, float32(x), float32(y), float32(simulation.Radius*(WindowHeight/simulation.Height)), color.RGBA{71, 155, 203, 255}, true)
 }
 
 func SimToRenderCoords(xSim, ySim float64) (xRender, yRender float64) {
