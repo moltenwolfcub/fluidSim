@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	numSubSteps       int     = 3
-	pressureIters     int     = 30
+	numSubSteps       int     = 5
+	pressureIters     int     = 50
 	flipRatio         float64 = 0.9
 	overrelaxation    float64 = 1.9
 	driftCompensation float64 = 1.0
-	particleCount     int     = 2000
+	particleCount     int     = 2500
 	gravity           float64 = -9.81 //ms^-2
 
 	Width      float64 = 4   //m
@@ -100,7 +100,7 @@ func NewSimulation() *Simulation {
 func (s *Simulation) addRandomParticles(count int) {
 	for range count {
 		s.particles = append(s.particles, Particle{
-			pos: [2]float64{1 + rand.Float64()*2, rand.Float64() * 1},
+			pos: [2]float64{1 + rand.Float64()*2, GridSize + rand.Float64()*1},
 			// pos: [2]float64{rand.Float64() * Width, rand.Float64() * Height},
 			vel: [2]float64{0, 0},
 		})
