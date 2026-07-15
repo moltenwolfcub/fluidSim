@@ -15,12 +15,20 @@ const (
 )
 
 type Renderer struct {
-	sim *simulation.Simulation
+	sim              *simulation.Simulation
+	cachedSolidTiles *ebiten.Image
 }
 
 func NewRenderer(sim *simulation.Simulation) *Renderer {
 	r := Renderer{
 		sim: sim,
+	}
+
+	r.cachedSolidTiles = ebiten.NewImage(r.Layout(0, 0))
+	for _, c := range r.sim.GetGrid() {
+		if c.Solid() {
+			r.drawCell(r.cachedSolidTiles, c)
+		}
 	}
 
 	return &r
@@ -45,11 +53,8 @@ func (g *Renderer) Update() error {
 
 func (g *Renderer) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{14, 30, 39, 255})
-	for _, c := range g.sim.GetGrid() {
-		if c.Solid() {
-			g.drawCell(screen, c)
-		}
-	}
+	screen.DrawImage(g.cachedSolidTiles, nil)
+
 	for _, p := range g.sim.GetParticles() {
 		g.drawParticle(screen, p)
 	}
