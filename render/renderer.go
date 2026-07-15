@@ -45,9 +45,21 @@ func (g *Renderer) Update() error {
 
 func (g *Renderer) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{14, 30, 39, 255})
+	for _, c := range g.sim.GetGrid() {
+		if c.Solid() {
+			g.drawCell(screen, c)
+		}
+	}
 	for _, p := range g.sim.GetParticles() {
 		g.drawParticle(screen, p)
 	}
+}
+
+func (g *Renderer) drawCell(screen *ebiten.Image, c simulation.Cell) {
+	rawX, rawY := c.GetPos()
+	x, y := SimToRenderCoords(float64(rawX)*simulation.GridSize, float64(rawY)*simulation.GridSize)
+
+	vector.FillRect(screen, float32(x), float32(y), float32(simulation.GridSize*(WindowWidth/simulation.Width)), float32(simulation.GridSize*(WindowHeight/simulation.Height)), color.RGBA{100, 100, 100, 255}, true)
 }
 
 func (g *Renderer) drawParticle(screen *ebiten.Image, p simulation.Particle) {

@@ -17,14 +17,14 @@ const (
 	Width      float64 = 4   //m
 	Height     float64 = 3   //m
 	resolution float64 = 100 // total cells vertically
-	gridSize   float64 = Height / resolution
+	GridSize   float64 = Height / resolution
 
 	Radius float64 = 0.025 //m
 )
 
 var (
-	cellsW = int(math.Floor(Width/gridSize)) + 1
-	cellsH = int(math.Floor(Height/gridSize)) + 1
+	cellsW = int(math.Floor(Width/GridSize)) + 1
+	cellsH = int(math.Floor(Height/GridSize)) + 1
 )
 
 type Particle struct {
@@ -44,7 +44,7 @@ const (
 	Solid
 )
 
-type cell struct {
+type Cell struct {
 	cellType        CellType
 	coord           [2]int
 	u, v            float64 // U is the cell's left velocity and V is the cell's up velocity
@@ -54,9 +54,17 @@ type cell struct {
 	particleDensity float64
 }
 
+func (c Cell) GetPos() (x, y int) {
+	return c.coord[0], c.coord[1]
+}
+
+func (c Cell) Solid() bool {
+	return !c.canContainFluid
+}
+
 type Simulation struct {
 	particles           []Particle
-	grid                []cell
+	grid                []Cell
 	particleRestDensity float64
 }
 
@@ -67,10 +75,10 @@ func NewSimulation() *Simulation {
 
 	totalCells := cellsW * cellsH
 
-	s.grid = make([]cell, totalCells)
+	s.grid = make([]Cell, totalCells)
 	for j := range cellsH {
 		for i := range cellsW {
-			c := cell{
+			c := Cell{
 				cellType: Air,
 				coord:    [2]int{i, j},
 				u:        0,
@@ -116,6 +124,9 @@ func (s *Simulation) Simulate(dt float64) {
 func (s Simulation) GetParticles() []Particle {
 	return s.particles
 }
+func (s Simulation) GetGrid() []Cell {
+	return s.grid
+}
 
 func (s *Simulation) integrateParticles(dt float64) {
 	for i := range s.particles {
@@ -127,10 +138,10 @@ func (s *Simulation) integrateParticles(dt float64) {
 }
 
 func (s *Simulation) handleWallCollisions() {
-	minX := gridSize + Radius
-	maxX := float64(cellsW-1)*gridSize - Radius
-	minY := gridSize + Radius
-	maxY := float64(cellsH-1)*gridSize - Radius
+	minX := GridSize + Radius
+	maxX := float64(cellsW-1)*GridSize - Radius
+	minY := GridSize + Radius
+	maxY := float64(cellsH-1)*GridSize - Radius
 
 	for i := range s.particles {
 		x, y := s.particles[i].GetPos()
@@ -179,13 +190,13 @@ func (s *Simulation) transferVelocityToGrid() {
 	// x-component
 	for i := range s.particles {
 		c := s.particleToCell(s.particles[i])
-		dx := s.particles[i].pos[0] - float64(c.coord[0])*gridSize
-		dy := s.particles[i].pos[1] - float64(c.coord[1])*gridSize
+		dx := s.particles[i].pos[0] - float64(c.coord[0])*GridSize
+		dy := s.particles[i].pos[1] - float64(c.coord[1])*GridSize
 
 		rightNeighbour := c.coord[1]*cellsW + c.coord[0] + 1
 		var verticalNeighbour int
 		var verticalRightNeighbour int
-		inUpper := dy < gridSize/2
+		inUpper := dy < GridSize/2
 		if inUpper {
 			targetY := max(c.coord[1]-1, 0)
 
@@ -200,7 +211,7 @@ func (s *Simulation) transferVelocityToGrid() {
 
 		var c1, c2, c3, c4 int
 		var ty float64
-		tx := dx / gridSize
+		tx := dx / GridSize
 
 		if inUpper {
 			c1 = c.coord[1]*cellsW + c.coord[0]
@@ -208,14 +219,14 @@ func (s *Simulation) transferVelocityToGrid() {
 			c3 = verticalRightNeighbour
 			c4 = verticalNeighbour
 
-			ty = (dy / gridSize) + 0.5
+			ty = (dy / GridSize) + 0.5
 		} else {
 			c1 = verticalNeighbour
 			c2 = verticalRightNeighbour
 			c3 = rightNeighbour
 			c4 = c.coord[1]*cellsW + c.coord[0]
 
-			ty = (dy / gridSize) - 0.5
+			ty = (dy / GridSize) - 0.5
 		}
 
 		w1 := (1 - tx) * (ty)
@@ -238,13 +249,13 @@ func (s *Simulation) transferVelocityToGrid() {
 	// y-component
 	for i := range s.particles {
 		c := s.particleToCell(s.particles[i])
-		dx := s.particles[i].pos[0] - float64(c.coord[0])*gridSize
-		dy := s.particles[i].pos[1] - float64(c.coord[1])*gridSize
+		dx := s.particles[i].pos[0] - float64(c.coord[0])*GridSize
+		dy := s.particles[i].pos[1] - float64(c.coord[1])*GridSize
 
 		belowNeighbour := (c.coord[1]+1)*cellsW + c.coord[0]
 		var horizontalNeighbour int
 		var horizontalBelowNeighbour int
-		inLeft := dx < gridSize/2
+		inLeft := dx < GridSize/2
 		if inLeft {
 			targetX := max(c.coord[0]-1, 0)
 
@@ -259,7 +270,7 @@ func (s *Simulation) transferVelocityToGrid() {
 
 		var c1, c2, c3, c4 int
 		var tx float64
-		ty := dy / gridSize
+		ty := dy / GridSize
 
 		if inLeft {
 			c1 = horizontalBelowNeighbour
@@ -267,14 +278,14 @@ func (s *Simulation) transferVelocityToGrid() {
 			c3 = c.coord[1]*cellsW + c.coord[0]
 			c4 = horizontalNeighbour
 
-			tx = (dx / gridSize) + 0.5
+			tx = (dx / GridSize) + 0.5
 		} else {
 			c1 = belowNeighbour
 			c2 = horizontalBelowNeighbour
 			c3 = horizontalNeighbour
 			c4 = c.coord[1]*cellsW + c.coord[0]
 
-			tx = (dx / gridSize) - 0.5
+			tx = (dx / GridSize) - 0.5
 		}
 
 		w1 := (1 - tx) * (ty)
@@ -383,13 +394,13 @@ func (s *Simulation) transferVelocityToParticles() {
 	// x-component
 	for i := range s.particles {
 		c := s.particleToCell(s.particles[i])
-		dx := s.particles[i].pos[0] - float64(c.coord[0])*gridSize
-		dy := s.particles[i].pos[1] - float64(c.coord[1])*gridSize
+		dx := s.particles[i].pos[0] - float64(c.coord[0])*GridSize
+		dy := s.particles[i].pos[1] - float64(c.coord[1])*GridSize
 
 		rightNeighbour := c.coord[1]*cellsW + c.coord[0] + 1
 		var verticalNeighbour int
 		var verticalRightNeighbour int
-		inUpper := dy < gridSize/2
+		inUpper := dy < GridSize/2
 		if inUpper {
 			targetY := max(c.coord[1]-1, 0)
 
@@ -404,7 +415,7 @@ func (s *Simulation) transferVelocityToParticles() {
 
 		var c1, c2, c3, c4 int
 		var ty float64
-		tx := dx / gridSize
+		tx := dx / GridSize
 
 		if inUpper {
 			c1 = c.coord[1]*cellsW + c.coord[0]
@@ -412,14 +423,14 @@ func (s *Simulation) transferVelocityToParticles() {
 			c3 = verticalRightNeighbour
 			c4 = verticalNeighbour
 
-			ty = (dy / gridSize) + 0.5
+			ty = (dy / GridSize) + 0.5
 		} else {
 			c1 = verticalNeighbour
 			c2 = verticalRightNeighbour
 			c3 = rightNeighbour
 			c4 = c.coord[1]*cellsW + c.coord[0]
 
-			ty = (dy / gridSize) - 0.5
+			ty = (dy / GridSize) - 0.5
 		}
 
 		w1 := (1 - tx) * (ty)
@@ -461,13 +472,13 @@ func (s *Simulation) transferVelocityToParticles() {
 	// y-component
 	for i := range s.particles {
 		c := s.particleToCell(s.particles[i])
-		dx := s.particles[i].pos[0] - float64(c.coord[0])*gridSize
-		dy := s.particles[i].pos[1] - float64(c.coord[1])*gridSize
+		dx := s.particles[i].pos[0] - float64(c.coord[0])*GridSize
+		dy := s.particles[i].pos[1] - float64(c.coord[1])*GridSize
 
 		belowNeighbour := (c.coord[1]+1)*cellsW + c.coord[0]
 		var horizontalNeighbour int
 		var horizontalBelowNeighbour int
-		inLeft := dx < gridSize/2
+		inLeft := dx < GridSize/2
 		if inLeft {
 			targetX := max(c.coord[0]-1, 0)
 
@@ -482,7 +493,7 @@ func (s *Simulation) transferVelocityToParticles() {
 
 		var c1, c2, c3, c4 int
 		var tx float64
-		ty := dy / gridSize
+		ty := dy / GridSize
 
 		if inLeft {
 			c1 = horizontalBelowNeighbour
@@ -490,14 +501,14 @@ func (s *Simulation) transferVelocityToParticles() {
 			c3 = c.coord[1]*cellsW + c.coord[0]
 			c4 = horizontalNeighbour
 
-			tx = (dx / gridSize) + 0.5
+			tx = (dx / GridSize) + 0.5
 		} else {
 			c1 = belowNeighbour
 			c2 = horizontalBelowNeighbour
 			c3 = horizontalNeighbour
 			c4 = c.coord[1]*cellsW + c.coord[0]
 
-			tx = (dx / gridSize) - 0.5
+			tx = (dx / GridSize) - 0.5
 		}
 
 		w1 := (1 - tx) * (ty)
@@ -544,14 +555,14 @@ func (s *Simulation) updateParticleDensity() {
 	}
 	for i := range s.particles {
 
-		shiftedX := math.Max(0, math.Min(s.particles[i].pos[0]-(gridSize*0.5), float64(cellsW-2)*gridSize))
-		shiftedY := math.Max(0, math.Min(s.particles[i].pos[1]-(gridSize*0.5), float64(cellsH-2)*gridSize))
+		shiftedX := math.Max(0, math.Min(s.particles[i].pos[0]-(GridSize*0.5), float64(cellsW-2)*GridSize))
+		shiftedY := math.Max(0, math.Min(s.particles[i].pos[1]-(GridSize*0.5), float64(cellsH-2)*GridSize))
 
-		cx := int(math.Floor(shiftedX / gridSize))
-		cy := int(math.Floor(shiftedY / gridSize))
+		cx := int(math.Floor(shiftedX / GridSize))
+		cy := int(math.Floor(shiftedY / GridSize))
 
-		tx := (shiftedX - float64(cx)*gridSize) / gridSize
-		ty := (shiftedY - float64(cy)*gridSize) / gridSize
+		tx := (shiftedX - float64(cx)*GridSize) / GridSize
+		ty := (shiftedY - float64(cy)*GridSize) / GridSize
 		sx := 1.0 - tx
 		sy := 1.0 - ty
 
@@ -586,11 +597,11 @@ func (s *Simulation) updateParticleDensity() {
 	}
 }
 
-func (s *Simulation) particleToCell(p Particle) cell {
+func (s *Simulation) particleToCell(p Particle) Cell {
 	x, y := p.GetPos()
 
-	xCell := int(math.Floor(x / gridSize))
-	yCell := int(math.Floor(y / gridSize))
+	xCell := int(math.Floor(x / GridSize))
+	yCell := int(math.Floor(y / GridSize))
 
 	return s.grid[yCell*cellsW+xCell]
 }
