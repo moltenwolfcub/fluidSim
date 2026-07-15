@@ -425,16 +425,16 @@ func (s *Simulation) transferVelocityToParticles() {
 		pVelX := s.particles[i].vel[0]
 
 		valid1, valid2, valid3, valid4 := 0.0, 0.0, 0.0, 0.0
-		if s.grid[c1].cellType != Air || (c1 > 0 && s.grid[c1-1].cellType != Air) {
+		if s.grid[c1].cellType != Air || (s.grid[c1].coord[0] > 0 && s.grid[c1-1].cellType != Air) {
 			valid1 = 1
 		}
-		if s.grid[c2].cellType != Air || (c2 > 0 && s.grid[c2-1].cellType != Air) {
+		if s.grid[c2].cellType != Air || (s.grid[c2].coord[0] > 0 && s.grid[c2-1].cellType != Air) {
 			valid2 = 1
 		}
-		if s.grid[c3].cellType != Air || (c3 > 0 && s.grid[c3-1].cellType != Air) {
+		if s.grid[c3].cellType != Air || (s.grid[c3].coord[0] > 0 && s.grid[c3-1].cellType != Air) {
 			valid3 = 1
 		}
-		if s.grid[c4].cellType != Air || (c4 > 0 && s.grid[c4-1].cellType != Air) {
+		if s.grid[c4].cellType != Air || (s.grid[c4].coord[0] > 0 && s.grid[c4-1].cellType != Air) {
 			valid4 = 1
 		}
 		w := valid1*w1 + valid2*w2 + valid3*w3 + valid4*w4
@@ -503,16 +503,16 @@ func (s *Simulation) transferVelocityToParticles() {
 		pVelY := s.particles[i].vel[1]
 
 		valid1, valid2, valid3, valid4 := 0.0, 0.0, 0.0, 0.0
-		if s.grid[c1].cellType != Air || (c1 >= cellsW && s.grid[c1-cellsW].cellType != Air) {
+		if s.grid[c1].cellType != Air || (s.grid[c1].coord[1] > 0 && s.grid[c1-cellsW].cellType != Air) {
 			valid1 = 1
 		}
-		if s.grid[c2].cellType != Air || (c2 >= cellsW && s.grid[c2-cellsW].cellType != Air) {
+		if s.grid[c2].cellType != Air || (s.grid[c2].coord[1] > 0 && s.grid[c2-cellsW].cellType != Air) {
 			valid2 = 1
 		}
-		if s.grid[c3].cellType != Air || (c3 >= cellsW && s.grid[c3-cellsW].cellType != Air) {
+		if s.grid[c3].cellType != Air || (s.grid[c3].coord[1] > 0 && s.grid[c3-cellsW].cellType != Air) {
 			valid3 = 1
 		}
-		if s.grid[c4].cellType != Air || (c4 >= cellsW && s.grid[c4-cellsW].cellType != Air) {
+		if s.grid[c4].cellType != Air || (s.grid[c4].coord[1] > 0 && s.grid[c4-cellsW].cellType != Air) {
 			valid4 = 1
 		}
 		w := valid1*w1 + valid2*w2 + valid3*w3 + valid4*w4
