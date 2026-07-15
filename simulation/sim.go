@@ -127,22 +127,27 @@ func (s *Simulation) integrateParticles(dt float64) {
 }
 
 func (s *Simulation) handleWallCollisions() {
+	minX := gridSize + Radius
+	maxX := float64(cellsW-1)*gridSize - Radius
+	minY := gridSize + Radius
+	maxY := float64(cellsH-1)*gridSize - Radius
+
 	for i := range s.particles {
 		x, y := s.particles[i].GetPos()
 
-		if x < Radius {
-			s.particles[i].pos[0] = Radius
+		if x < minX {
+			s.particles[i].pos[0] = minX
 			s.particles[i].vel[0] = 0
-		} else if x > Width-Radius {
-			s.particles[i].pos[0] = Width - Radius
+		} else if x > maxX {
+			s.particles[i].pos[0] = maxX
 			s.particles[i].vel[0] = 0
 		}
 
-		if y < Radius {
-			s.particles[i].pos[1] = Radius
+		if y < minY {
+			s.particles[i].pos[1] = minY
 			s.particles[i].vel[1] = 0
-		} else if y > Height-Radius {
-			s.particles[i].pos[1] = Height - Radius
+		} else if y > maxY {
+			s.particles[i].pos[1] = maxY
 			s.particles[i].vel[1] = 0
 		}
 	}
