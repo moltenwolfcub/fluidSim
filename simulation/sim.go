@@ -6,12 +6,13 @@ import (
 )
 
 const (
-	numSubSteps    int     = 1
-	pressureIters  int     = 30
-	flipRatio      float64 = 0.9
-	overrelaxation float64 = 1.9
-	particleCount  int     = 2000
-	gravity        float64 = -9.81 //ms^-2
+	numSubSteps       int     = 3
+	pressureIters     int     = 30
+	flipRatio         float64 = 0.9
+	overrelaxation    float64 = 1.9
+	driftCompensation float64 = 1.0
+	particleCount     int     = 2000
+	gravity           float64 = -9.81 //ms^-2
 
 	Width      float64 = 4   //m
 	Height     float64 = 3   //m
@@ -50,11 +51,13 @@ type cell struct {
 	du, dv          float64
 	prevU, prevV    float64
 	canContainFluid bool
+	particleDensity float64
 }
 
 type Simulation struct {
-	particles []Particle
-	grid      []cell
+	particles           []Particle
+	grid                []cell
+	particleRestDensity float64
 }
 
 func NewSimulation() *Simulation {
@@ -103,6 +106,7 @@ func (s *Simulation) Simulate(dt float64) {
 		s.integrateParticles(sdt)
 		s.handleWallCollisions()
 		s.transferVelocityToGrid()
+		s.updateParticleDensity()
 		s.solveIncompressibility()
 		s.transferVelocityToParticles()
 	}
@@ -340,7 +344,13 @@ func (s *Simulation) solveIncompressibility() {
 				}
 
 				divergence := s.grid[right].u - s.grid[center].u + s.grid[down].v - s.grid[center].v
-				//TODO drift compensation
+
+				if s.particleRestDensity > 0 {
+					compression := s.grid[center].particleDensity - s.particleRestDensity
+					if compression > 0 {
+						divergence -= compression * driftCompensation
+					}
+				}
 
 				p := divergence / float64(openNeighbours)
 
@@ -519,6 +529,54 @@ func (s *Simulation) transferVelocityToParticles() {
 			flipV := pVelY + corr
 
 			s.particles[i].vel[1] = (1.0-flipRatio)*picV + flipRatio*flipV
+		}
+	}
+}
+
+func (s *Simulation) updateParticleDensity() {
+	for i := range s.grid {
+		s.grid[i].particleDensity = 0
+	}
+	for i := range s.particles {
+
+		shiftedX := math.Max(0, math.Min(s.particles[i].pos[0]-(gridSize*0.5), float64(cellsW-2)*gridSize))
+		shiftedY := math.Max(0, math.Min(s.particles[i].pos[1]-(gridSize*0.5), float64(cellsH-2)*gridSize))
+
+		cx := int(math.Floor(shiftedX / gridSize))
+		cy := int(math.Floor(shiftedY / gridSize))
+
+		tx := (shiftedX - float64(cx)*gridSize) / gridSize
+		ty := (shiftedY - float64(cy)*gridSize) / gridSize
+		sx := 1.0 - tx
+		sy := 1.0 - ty
+
+		w1 := sx * ty
+		w2 := tx * ty
+		w3 := tx * sy
+		w4 := sx * sy
+
+		c1 := (cy+1)*cellsW + cx
+		c2 := (cy+1)*cellsW + (cx + 1)
+		c3 := cy*cellsW + (cx + 1)
+		c4 := cy*cellsW + cx
+
+		s.grid[c1].particleDensity += w1
+		s.grid[c2].particleDensity += w2
+		s.grid[c3].particleDensity += w3
+		s.grid[c4].particleDensity += w4
+	}
+	if s.particleRestDensity == 0 {
+		sum := 0.0
+		fluidCellCount := 0.0
+
+		for i := range s.grid {
+			if s.grid[i].cellType == Water {
+				sum += s.grid[i].particleDensity
+				fluidCellCount++
+			}
+		}
+		if fluidCellCount > 0 {
+			s.particleRestDensity = sum / fluidCellCount
 		}
 	}
 }
