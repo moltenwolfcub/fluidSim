@@ -54,7 +54,18 @@ func (g *Renderer) Layout(outsideWidth, outsideHeight int) (screenWidth, screenH
 }
 
 func (g *Renderer) Update() error {
-	g.sim.Simulate(1 / float64(TPS))
+	var mx, my float64
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		rawX, rawY := ebiten.CursorPosition()
+
+		mx = float64(rawX) * (simulation.Width / WindowWidth)
+		my = float64(rawY) * (simulation.Height / WindowHeight)
+
+	} else {
+		mx, my = -1, -1
+	}
+
+	g.sim.Simulate(1/float64(TPS), mx, my)
 	return nil
 }
 

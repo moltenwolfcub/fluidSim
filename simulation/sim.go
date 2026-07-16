@@ -24,8 +24,9 @@ const (
 	resolution float64 = 100 // total cells vertically
 	GridSize   float64 = Height / resolution
 
-	Radius  float64 = 0.017 //m
-	gravity float64 = -9.81 //ms^-2
+	Radius        float64 = 0.017 //m
+	gravity       float64 = -9.81 //ms^-2
+	mouseStrength float64 = 5.0   //kgm^3s^-2
 
 	deterministic bool = false
 )
@@ -141,11 +142,11 @@ func (s *Simulation) addRandomParticles(count int) {
 	}
 }
 
-func (s *Simulation) Simulate(dt float64) {
+func (s *Simulation) Simulate(dt float64, mouseX float64, mouseY float64) {
 	sdt := dt / float64(numSubSteps)
 
 	for range numSubSteps {
-		s.integrateParticles(sdt)
+		s.integrateParticles(sdt, mouseX, mouseY)
 		if separateParticles {
 			s.pushParticlesApart()
 		}
@@ -165,9 +166,17 @@ func (s Simulation) GetGrid() []Cell {
 	return s.grid
 }
 
-func (s *Simulation) integrateParticles(dt float64) {
+func (s *Simulation) integrateParticles(dt float64, mouseX float64, mouseY float64) {
 	for i := range s.particles {
 		s.particles[i].vel[1] += dt * -gravity
+
+		dx := s.particles[i].pos[0] - mouseX
+		dy := s.particles[i].pos[1] - mouseY
+		mouseDist := math.Sqrt(dx*dx + dy*dy)
+		mouseForce := mouseStrength / (mouseDist * mouseDist * mouseDist)
+
+		s.particles[i].vel[0] += dt * dx * mouseForce
+		s.particles[i].vel[1] += dt * dy * mouseForce
 
 		s.particles[i].pos[0] += s.particles[i].vel[0] * dt
 		s.particles[i].pos[1] += s.particles[i].vel[1] * dt
@@ -698,6 +707,14 @@ func (s *Simulation) buildSpacialHash() {
 	for i := range s.particles {
 		cx := int(s.particles[i].pos[0] / GridSize)
 		cy := int(s.particles[i].pos[1] / GridSize)
+
+		if cx < 0 || cx >= cellsW || cy < 0 || cy >= cellsH {
+			fmt.Println(cellsW, cellsH, "Out of bounds", cx, cy) //TODO TEMPORARY FIX FOR THIS OOB ERROR
+			cx = max(0, min(cx, cellsW-1))
+			cy = max(0, min(cy, cellsH-1))
+			fmt.Println("changed to:", cx, cy)
+		}
+
 		cellId := cy*cellsW + cx
 
 		s.cellAccumulatedParticles[cellId]++ //how many are in each cell
@@ -714,6 +731,14 @@ func (s *Simulation) buildSpacialHash() {
 	for i := range s.particles {
 		cx := int(s.particles[i].pos[0] / GridSize)
 		cy := int(s.particles[i].pos[1] / GridSize)
+
+		if cx < 0 || cx >= cellsW || cy < 0 || cy >= cellsH {
+			fmt.Println(cellsW, cellsH, "Also Out of bounds", cx, cy)
+			cx = max(0, min(cx, cellsW-1))
+			cy = max(0, min(cy, cellsH-1))
+			fmt.Println("changed to:", cx, cy)
+		}
+
 		cellId := cy*cellsW + cx
 
 		freeID := s.cellAccumulatedParticles[cellId]
