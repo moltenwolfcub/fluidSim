@@ -7,24 +7,27 @@ import (
 )
 
 const (
-	particleCount   int = 3000
+	particleCount   int = 2500
 	numSubSteps     int = 4
 	pressureIters   int = 50
-	separationIters int = 2
+	separationIters int = 3
 
-	flipRatio         float64 = 0.95
-	overrelaxation    float64 = 1.9
-	driftCompensation float64 = 1.0
-	separationFactor  float64 = 1.0
-	separateParticles bool    = true
+	flipRatio           float64 = 0.95
+	divergenceThreshold float64 = 0.1
+	overrelaxation      float64 = 1.9
+	driftCompensation   float64 = 1.0
+	separationFactor    float64 = 1.0
+	separateParticles   bool    = true
 
 	Width      float64 = 4   //m
 	Height     float64 = 3   //m
 	resolution float64 = 100 // total cells vertically
 	GridSize   float64 = Height / resolution
 
-	Radius  float64 = 0.01  //m
+	Radius  float64 = 0.017 //m
 	gravity float64 = -9.81 //ms^-2
+
+	deterministic bool = false
 )
 
 var (
@@ -117,12 +120,24 @@ func NewSimulation() *Simulation {
 }
 
 func (s *Simulation) addRandomParticles(count int) {
-	for range count {
-		s.particles = append(s.particles, Particle{
-			pos: [2]float64{1 + rand.Float64()*2, GridSize + rand.Float64()*1},
-			// pos: [2]float64{rand.Float64() * Width, rand.Float64() * Height},
-			vel: [2]float64{0, 0},
-		})
+	if deterministic {
+		r := rand.New(rand.NewSource(2))
+		for range count {
+			s.particles = append(s.particles, Particle{
+				pos: [2]float64{1 + r.Float64()*2, GridSize + r.Float64()*1},
+				// pos: [2]float64{rand.Float64() * Width, rand.Float64() * Height},
+				vel: [2]float64{0, 0},
+			})
+		}
+	} else {
+		for range count {
+			s.particles = append(s.particles, Particle{
+				pos: [2]float64{1 + rand.Float64()*2, GridSize + rand.Float64()*1},
+				// pos: [2]float64{rand.Float64() * Width, rand.Float64() * Height},
+				vel: [2]float64{0, 0},
+			})
+		}
+
 	}
 }
 
@@ -364,6 +379,11 @@ func (s *Simulation) solveIncompressibility() {
 				left := j*cellsW + i - 1
 				right := j*cellsW + i + 1
 
+				divergence := s.grid[right].u - s.grid[center].u + s.grid[down].v - s.grid[center].v
+				if divergence*divergence < divergenceThreshold {
+					continue
+				}
+
 				openNeighbours := 0
 				if s.grid[up].canContainFluid {
 					openNeighbours++
@@ -380,8 +400,6 @@ func (s *Simulation) solveIncompressibility() {
 				if openNeighbours == 0 {
 					continue
 				}
-
-				divergence := s.grid[right].u - s.grid[center].u + s.grid[down].v - s.grid[center].v
 
 				if s.particleRestDensity > 0 {
 					compression := s.grid[center].particleDensity - s.particleRestDensity
