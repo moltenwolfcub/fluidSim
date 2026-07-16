@@ -55,7 +55,7 @@ func (g *Renderer) Layout(outsideWidth, outsideHeight int) (screenWidth, screenH
 
 func (g *Renderer) Update() error {
 	var mx, my float64
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
 		rawX, rawY := ebiten.CursorPosition()
 
 		mx = float64(rawX) * (simulation.Width / WindowWidth)

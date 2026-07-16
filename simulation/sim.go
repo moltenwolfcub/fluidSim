@@ -170,13 +170,17 @@ func (s *Simulation) integrateParticles(dt float64, mouseX float64, mouseY float
 	for i := range s.particles {
 		s.particles[i].vel[1] += dt * -gravity
 
-		dx := s.particles[i].pos[0] - mouseX
-		dy := s.particles[i].pos[1] - mouseY
-		mouseDist := math.Sqrt(dx*dx + dy*dy)
-		mouseForce := mouseStrength / (mouseDist * mouseDist * mouseDist)
+		if mouseX >= 0 && mouseY >= 0 {
+			dx := s.particles[i].pos[0] - mouseX
+			dy := s.particles[i].pos[1] - mouseY
+			mouseDist := math.Sqrt(dx*dx + dy*dy)
+			mouseDist = math.Max(mouseDist, 0.1)
 
-		s.particles[i].vel[0] += dt * dx * mouseForce
-		s.particles[i].vel[1] += dt * dy * mouseForce
+			mouseForce := mouseStrength / (mouseDist * mouseDist * mouseDist)
+
+			s.particles[i].vel[0] += dt * dx * mouseForce
+			s.particles[i].vel[1] += dt * dy * mouseForce
+		}
 
 		s.particles[i].pos[0] += s.particles[i].vel[0] * dt
 		s.particles[i].pos[1] += s.particles[i].vel[1] * dt
