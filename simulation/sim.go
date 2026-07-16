@@ -7,21 +7,23 @@ import (
 )
 
 const (
-	particleCount   int = 2500
-	numSubSteps     int = 5
+	particleCount   int = 3000
+	numSubSteps     int = 4
 	pressureIters   int = 50
-	separationIters int = 5
+	separationIters int = 2
 
-	flipRatio         float64 = 0.9
+	flipRatio         float64 = 0.95
 	overrelaxation    float64 = 1.9
 	driftCompensation float64 = 1.0
+	separationFactor  float64 = 1.0
+	separateParticles bool    = true
 
 	Width      float64 = 4   //m
 	Height     float64 = 3   //m
 	resolution float64 = 100 // total cells vertically
 	GridSize   float64 = Height / resolution
 
-	Radius  float64 = 0.025 //m
+	Radius  float64 = 0.01  //m
 	gravity float64 = -9.81 //ms^-2
 )
 
@@ -129,7 +131,9 @@ func (s *Simulation) Simulate(dt float64) {
 
 	for range numSubSteps {
 		s.integrateParticles(sdt)
-		s.pushParticlesApart()
+		if separateParticles {
+			s.pushParticlesApart()
+		}
 		s.handleWallCollisions()
 		s.transferVelocityToGrid()
 		s.updateParticleDensity()
@@ -653,7 +657,7 @@ func (s *Simulation) pushParticlesApart() {
 							normalisedX := dx / dist
 							normalisedY := dy / dist
 
-							pushAmount := overlap * 0.5
+							pushAmount := overlap * 0.5 * separationFactor
 
 							s.particles[i].pos[0] += normalisedX * pushAmount
 							s.particles[i].pos[1] += normalisedY * pushAmount
