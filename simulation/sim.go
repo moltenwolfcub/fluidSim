@@ -7,20 +7,22 @@ import (
 )
 
 const (
-	numSubSteps       int     = 5
-	pressureIters     int     = 50
+	particleCount   int = 2500
+	numSubSteps     int = 5
+	pressureIters   int = 50
+	separationIters int = 5
+
 	flipRatio         float64 = 0.9
 	overrelaxation    float64 = 1.9
 	driftCompensation float64 = 1.0
-	particleCount     int     = 2500
-	gravity           float64 = -9.81 //ms^-2
 
 	Width      float64 = 4   //m
 	Height     float64 = 3   //m
 	resolution float64 = 100 // total cells vertically
 	GridSize   float64 = Height / resolution
 
-	Radius float64 = 0.025 //m
+	Radius  float64 = 0.025 //m
+	gravity float64 = -9.81 //ms^-2
 )
 
 var (
@@ -73,14 +75,22 @@ type Simulation struct {
 	particles           []Particle
 	grid                []Cell
 	particleRestDensity float64
+
+	cellAccumulatedParticles []int
+	particleLookup           []int
 }
 
 func NewSimulation() *Simulation {
-	s := Simulation{}
-	s.particles = make([]Particle, 0)
+	s := Simulation{
+		particles:           make([]Particle, 0),
+		particleRestDensity: 0.0,
+	}
 	s.addRandomParticles(particleCount)
+	s.particleLookup = make([]int, len(s.particles))
 
 	totalCells := cellsW * cellsH
+
+	s.cellAccumulatedParticles = make([]int, totalCells+1)
 
 	s.grid = make([]Cell, totalCells)
 	for j := range cellsH {
@@ -119,6 +129,7 @@ func (s *Simulation) Simulate(dt float64) {
 
 	for range numSubSteps {
 		s.integrateParticles(sdt)
+		s.pushParticlesApart()
 		s.handleWallCollisions()
 		s.transferVelocityToGrid()
 		s.updateParticleDensity()
@@ -602,6 +613,97 @@ func (s *Simulation) updateParticleDensity() {
 			s.particleRestDensity = sum / fluidCellCount
 		}
 	}
+}
+
+func (s *Simulation) pushParticlesApart() {
+	s.buildSpacialHash()
+
+	for range separationIters {
+		for i := range s.particles {
+			cellX := int(s.particles[i].pos[0] / GridSize)
+			cellY := int(s.particles[i].pos[1] / GridSize)
+
+			for neighbourY := cellY - 1; neighbourY <= cellY+1; neighbourY++ {
+				for neighbourX := cellX - 1; neighbourX <= cellX+1; neighbourX++ {
+					if neighbourX < 0 || neighbourX >= cellsW || neighbourY < 0 || neighbourY >= cellsH {
+						continue
+					}
+					id := neighbourY*cellsW + neighbourX
+
+					firstParticle := s.cellAccumulatedParticles[id]  //number of particles before this cell
+					lastParticle := s.cellAccumulatedParticles[id+1] //number of particles before next cell
+
+					for otherParticle := firstParticle; otherParticle < lastParticle; otherParticle++ {
+						if i == s.particleLookup[otherParticle] {
+							continue
+						}
+
+						dx := s.particles[i].pos[0] - s.particles[s.particleLookup[otherParticle]].pos[0]
+						dy := s.particles[i].pos[1] - s.particles[s.particleLookup[otherParticle]].pos[1]
+						distSquared := dx*dx + dy*dy
+
+						if distSquared == 0 {
+							continue
+						}
+
+						if distSquared < 4*Radius*Radius {
+							dist := math.Sqrt(distSquared)
+							overlap := 2*Radius - dist
+
+							normalisedX := dx / dist
+							normalisedY := dy / dist
+
+							pushAmount := overlap * 0.5
+
+							s.particles[i].pos[0] += normalisedX * pushAmount
+							s.particles[i].pos[1] += normalisedY * pushAmount
+
+							s.particles[s.particleLookup[otherParticle]].pos[0] -= normalisedX * pushAmount
+							s.particles[s.particleLookup[otherParticle]].pos[1] -= normalisedY * pushAmount
+						}
+					}
+				}
+			}
+
+		}
+	}
+}
+
+func (s *Simulation) buildSpacialHash() {
+	for i := range s.cellAccumulatedParticles {
+		s.cellAccumulatedParticles[i] = 0
+	}
+	for i := range s.particles {
+		cx := int(s.particles[i].pos[0] / GridSize)
+		cy := int(s.particles[i].pos[1] / GridSize)
+		cellId := cy*cellsW + cx
+
+		s.cellAccumulatedParticles[cellId]++ //how many are in each cell
+	}
+
+	currentSum := 0
+	for i := range s.grid {
+		count := s.cellAccumulatedParticles[i]
+		s.cellAccumulatedParticles[i] = currentSum // cumulative "frequency"
+		currentSum += count
+	}
+	s.cellAccumulatedParticles[len(s.grid)] = currentSum
+
+	for i := range s.particles {
+		cx := int(s.particles[i].pos[0] / GridSize)
+		cy := int(s.particles[i].pos[1] / GridSize)
+		cellId := cy*cellsW + cx
+
+		freeID := s.cellAccumulatedParticles[cellId]
+		s.particleLookup[freeID] = i //load particleLookup with particle ids
+
+		s.cellAccumulatedParticles[cellId]++
+	}
+
+	for i := len(s.grid) - 1; i > 0; i-- {
+		s.cellAccumulatedParticles[i] = s.cellAccumulatedParticles[i-1] // restore accumulated count
+	}
+	s.cellAccumulatedParticles[0] = 0
 }
 
 func (s *Simulation) particleToCell(p Particle) Cell {
