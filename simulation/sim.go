@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	particleCount   int = 2500
+	particleCount   int = 5000
 	numSubSteps     int = 4
 	pressureIters   int = 50
 	separationIters int = 3

@@ -2,6 +2,7 @@ package render
 
 import (
 	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -17,6 +18,8 @@ const (
 type Renderer struct {
 	sim              *simulation.Simulation
 	cachedSolidTiles *ebiten.Image
+	cachedParticle   *ebiten.Image
+	particleRadius   int
 }
 
 func NewRenderer(sim *simulation.Simulation) *Renderer {
@@ -30,6 +33,10 @@ func NewRenderer(sim *simulation.Simulation) *Renderer {
 			r.drawCell(r.cachedSolidTiles, c)
 		}
 	}
+
+	r.particleRadius = int(math.Floor(simulation.Radius * (WindowHeight / simulation.Height)))
+	r.cachedParticle = ebiten.NewImage(r.particleRadius*2, r.particleRadius*2)
+	vector.FillCircle(r.cachedParticle, float32(r.particleRadius), float32(r.particleRadius), float32(r.particleRadius), color.RGBA{71, 155, 203, 255}, true)
 
 	return &r
 }
@@ -70,7 +77,9 @@ func (g *Renderer) drawCell(screen *ebiten.Image, c simulation.Cell) {
 func (g *Renderer) drawParticle(screen *ebiten.Image, p simulation.Particle) {
 	x, y := SimToRenderCoords(p.GetPos())
 
-	vector.FillCircle(screen, float32(x), float32(y), float32(simulation.Radius*(WindowHeight/simulation.Height)), color.RGBA{71, 155, 203, 255}, true)
+	op := ebiten.DrawImageOptions{}
+	op.GeoM.Translate(x-float64(g.particleRadius), y-float64(g.particleRadius))
+	screen.DrawImage(g.cachedParticle, &op)
 }
 
 func SimToRenderCoords(xSim, ySim float64) (xRender, yRender float64) {
