@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 )
@@ -26,6 +27,12 @@ var (
 	cellsW = int(math.Floor(Width/GridSize)) + 1
 	cellsH = int(math.Floor(Height/GridSize)) + 1
 )
+
+func init() {
+	if Radius >= GridSize {
+		fmt.Println("Computation breaks when particles are bigger than gridCells")
+	}
+}
 
 type Particle struct {
 	pos [2]float64
