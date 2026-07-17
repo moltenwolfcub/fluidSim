@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	particleCount   int = 5000
-	numSubSteps     int = 4
-	pressureIters   int = 50
-	separationIters int = 3
+	particleCount   int = 8000
+	numSubSteps     int = 2
+	pressureIters   int = 30
+	separationIters int = 5
 
 	flipRatio           float64 = 0.95
 	divergenceThreshold float64 = 0.1
@@ -24,7 +24,7 @@ const (
 	resolution float64 = 100 // total cells vertically
 	GridSize   float64 = Height / resolution
 
-	Radius        float64 = 0.017 //m
+	Radius        float64 = 0.010 //m
 	gravity       float64 = -9.81 //ms^-2
 	mouseStrength float64 = 5.0   //kgm^3s^-2
 
@@ -345,19 +345,19 @@ func (s *Simulation) transferVelocityToGrid() {
 
 		pVelY := s.particles[i].vel[1]
 
-		s.grid[c1].v += w1 * pVelY
+		s.grid[c1].v += w1 * pVelY //bilinearly add pVelY
 		s.grid[c2].v += w2 * pVelY
 		s.grid[c3].v += w3 * pVelY
 		s.grid[c4].v += w4 * pVelY
 
-		s.grid[c1].dv += w1
+		s.grid[c1].dv += w1 //store the total weight added dv->totalWeightV
 		s.grid[c2].dv += w2
 		s.grid[c3].dv += w3
 		s.grid[c4].dv += w4
 	}
 	for i := range s.grid {
 		if s.grid[i].du > 0 {
-			s.grid[i].u /= s.grid[i].du
+			s.grid[i].u /= s.grid[i].du // normalilse weight to 1
 		}
 		if s.grid[i].dv > 0 {
 			s.grid[i].v /= s.grid[i].dv
