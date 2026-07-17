@@ -28,7 +28,7 @@ const (
 	gravity       float64 = -9.81 //ms^-2
 	mouseStrength float64 = 5.0   //kgm^3s^-2
 
-	deterministic bool = false
+	deterministic bool = true
 )
 
 var (
@@ -146,6 +146,7 @@ func (s *Simulation) Simulate(dt float64, mouseX float64, mouseY float64) {
 	sdt := dt / float64(numSubSteps)
 
 	for range numSubSteps {
+		s.initialise()
 		s.integrateParticles(sdt, mouseX, mouseY)
 		if separateParticles {
 			s.pushParticlesApart()
@@ -164,6 +165,27 @@ func (s Simulation) GetParticles() []Particle {
 }
 func (s Simulation) GetGrid() []Cell {
 	return s.grid
+}
+
+func (s *Simulation) initialise() {
+	for i := range s.grid {
+		s.grid[i].prevU = s.grid[i].u
+		s.grid[i].prevV = s.grid[i].v
+
+		s.grid[i].u = 0
+		s.grid[i].v = 0
+		s.grid[i].du = 0
+		s.grid[i].dv = 0
+
+		if s.grid[i].canContainFluid {
+			s.grid[i].cellType = Air
+		} else {
+			s.grid[i].cellType = Solid
+		}
+
+		s.grid[i].particleDensity = 0
+	}
+
 }
 
 func (s *Simulation) integrateParticles(dt float64, mouseX float64, mouseY float64) {
@@ -215,21 +237,6 @@ func (s *Simulation) handleWallCollisions() {
 }
 
 func (s *Simulation) transferVelocityToGrid() {
-	for i := range s.grid {
-		s.grid[i].prevU = s.grid[i].u
-		s.grid[i].prevV = s.grid[i].v
-
-		s.grid[i].u = 0
-		s.grid[i].v = 0
-		s.grid[i].du = 0
-		s.grid[i].dv = 0
-
-		if s.grid[i].canContainFluid {
-			s.grid[i].cellType = Air
-		} else {
-			s.grid[i].cellType = Solid
-		}
-	}
 	for i := range s.particles {
 		cell := s.particleToCell(s.particles[i])
 		if cell.cellType == Air {
@@ -603,9 +610,6 @@ func (s *Simulation) transferVelocityToParticles() {
 }
 
 func (s *Simulation) updateParticleDensity() {
-	for i := range s.grid {
-		s.grid[i].particleDensity = 0
-	}
 	for i := range s.particles {
 
 		shiftedX := math.Max(0, math.Min(s.particles[i].pos[0]-(GridSize*0.5), float64(cellsW-2)*GridSize))
