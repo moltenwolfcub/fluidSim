@@ -1,5 +1,13 @@
 ==========AS OF ADDING BENCHMARKS==========
 
-BenchmarkSimulate-8                          200          20781524 ns/op
-BenchmarkPushParticlesApart-8                200           3930058 ns/op
-BenchmarkSolveIncompressibility-8            200           1223481 ns/op
+BenchmarkSimulate-8                                  200          21701786 ns/op
+BenchmarkInitialise-8                                200             58392 ns/op
+BenchmarkIntegrateParticles-8                        200             26845 ns/op
+BenchmarkPushParticlesApart-8                        200           4133420 ns/op
+BenchmarkHandleWallCollisons-8                       200             24557 ns/op
+BenchmarkTransferVelocityToGrid-8                    200            649880 ns/op
+BenchmarkUpdateParticleDensity-8                     200            203007 ns/op
+BenchmarkSolveIncompressibility-8                    200           1241722 ns/op
+BenchmarkTransferVelocityToParticles-8               200            550293 ns/op
+PASS
+ok      github.com/moltenwolfcub/fluidSim/simulation    15.600s

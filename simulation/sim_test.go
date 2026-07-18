@@ -39,6 +39,55 @@ func BenchmarkSimulate(b *testing.B) {
 	}
 }
 
+func BenchmarkInitialise(b *testing.B) {
+	setTestingParameters()
+
+	sim := NewSimulation()
+
+	sdt := (1.0 / 60.0) / float64(numSubSteps)
+
+	for b.Loop() {
+		sim.initialise()
+		b.StopTimer()
+
+		sim.integrateParticles(sdt, -1, -1)
+		sim.pushParticlesApart()
+		sim.handleWallCollisions()
+		sim.transferVelocityToGrid()
+		sim.updateParticleDensity()
+		sim.solveIncompressibility()
+		sim.transferVelocityToParticles()
+
+		b.StartTimer()
+	}
+}
+func BenchmarkIntegrateParticles(b *testing.B) {
+	setTestingParameters()
+
+	sim := NewSimulation()
+
+	sdt := (1.0 / 60.0) / float64(numSubSteps)
+
+	for b.Loop() {
+		b.StopTimer()
+
+		sim.initialise()
+
+		b.StartTimer()
+		sim.integrateParticles(sdt, -1, -1)
+		b.StopTimer()
+
+		sim.pushParticlesApart()
+		sim.handleWallCollisions()
+		sim.transferVelocityToGrid()
+		sim.updateParticleDensity()
+		sim.solveIncompressibility()
+		sim.transferVelocityToParticles()
+
+		b.StartTimer()
+	}
+}
+
 func BenchmarkPushParticlesApart(b *testing.B) {
 	setTestingParameters()
 
@@ -61,6 +110,88 @@ func BenchmarkPushParticlesApart(b *testing.B) {
 		sim.updateParticleDensity()
 		sim.solveIncompressibility()
 		sim.transferVelocityToParticles()
+
+		b.StartTimer()
+	}
+}
+
+func BenchmarkHandleWallCollisons(b *testing.B) {
+	setTestingParameters()
+
+	sim := NewSimulation()
+
+	sdt := (1.0 / 60.0) / float64(numSubSteps)
+
+	for b.Loop() {
+		b.StopTimer()
+
+		sim.initialise()
+		sim.integrateParticles(sdt, -1, -1)
+		sim.pushParticlesApart()
+
+		b.StartTimer()
+		sim.handleWallCollisions()
+		b.StopTimer()
+
+		sim.transferVelocityToGrid()
+		sim.updateParticleDensity()
+		sim.solveIncompressibility()
+		sim.transferVelocityToParticles()
+
+		b.StartTimer()
+	}
+}
+
+func BenchmarkTransferVelocityToGrid(b *testing.B) {
+	setTestingParameters()
+
+	sim := NewSimulation()
+
+	sdt := (1.0 / 60.0) / float64(numSubSteps)
+
+	for b.Loop() {
+		b.StopTimer()
+
+		sim.initialise()
+		sim.integrateParticles(sdt, -1, -1)
+		sim.pushParticlesApart()
+		sim.handleWallCollisions()
+
+		b.StartTimer()
+		sim.transferVelocityToGrid()
+		b.StopTimer()
+
+		sim.updateParticleDensity()
+		sim.solveIncompressibility()
+		sim.transferVelocityToParticles()
+
+		b.StartTimer()
+	}
+}
+
+func BenchmarkUpdateParticleDensity(b *testing.B) {
+	setTestingParameters()
+
+	sim := NewSimulation()
+
+	sdt := (1.0 / 60.0) / float64(numSubSteps)
+
+	for b.Loop() {
+		b.StopTimer()
+
+		sim.initialise()
+		sim.integrateParticles(sdt, -1, -1)
+		sim.pushParticlesApart()
+		sim.handleWallCollisions()
+		sim.transferVelocityToGrid()
+
+		b.StartTimer()
+		sim.updateParticleDensity()
+		b.StopTimer()
+
+		sim.solveIncompressibility()
+		sim.transferVelocityToParticles()
+
 		b.StartTimer()
 	}
 }
@@ -87,6 +218,30 @@ func BenchmarkSolveIncompressibility(b *testing.B) {
 		b.StopTimer()
 
 		sim.transferVelocityToParticles()
+
 		b.StartTimer()
+	}
+}
+
+func BenchmarkTransferVelocityToParticles(b *testing.B) {
+	setTestingParameters()
+
+	sim := NewSimulation()
+
+	sdt := (1.0 / 60.0) / float64(numSubSteps)
+
+	for b.Loop() {
+		b.StopTimer()
+
+		sim.initialise()
+		sim.integrateParticles(sdt, -1, -1)
+		sim.pushParticlesApart()
+		sim.handleWallCollisions()
+		sim.transferVelocityToGrid()
+		sim.updateParticleDensity()
+		sim.solveIncompressibility()
+
+		b.StartTimer()
+		sim.transferVelocityToParticles()
 	}
 }
