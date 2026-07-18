@@ -54,3 +54,18 @@ BenchmarkTransferVelocityToParticles-8               200            523575 ns/op
 BenchmarkBuildSpacialHash-8                          200             79865 ns/op               0 B/op          0 allocs/op
 PASS
 ok      github.com/moltenwolfcub/fluidSim/simulation    14.292s
+
+==========PREALLOCATE SLICE + MUTATE IN PLACE==========
+
+BenchmarkSimulate-8                                  200          20154994 ns/op          983096 B/op          3 allocs/op
+BenchmarkInitialise-8                                200             45520 ns/op               0 B/op          0 allocs/op
+BenchmarkIntegrateParticles-8                        200             19451 ns/op               0 B/op          0 allocs/op
+BenchmarkPushParticlesApart-8                        200           4207147 ns/op          327680 B/op          1 allocs/op
+BenchmarkHandleWallCollisons-8                       200             25063 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToGrid-8                    200            638998 ns/op               0 B/op          0 allocs/op
+BenchmarkUpdateParticleDensity-8                     200            192555 ns/op               0 B/op          0 allocs/op
+BenchmarkSolveIncompressibility-8                    200           1222400 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToParticles-8               200            488617 ns/op               0 B/op          0 allocs/op
+BenchmarkBuildSpacialHash-8                          200             77088 ns/op               0 B/op          0 allocs/op
+PASS
+ok      github.com/moltenwolfcub/fluidSim/simulation    12.353s

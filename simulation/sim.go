@@ -636,32 +636,24 @@ func (s *Simulation) updateParticleDensity() {
 	}
 }
 
-type separationData struct {
-	id     int
-	dx, dy float64
-}
-
 func (s *Simulation) pushParticlesApart() {
 	s.buildSpacialHash()
 
+	newParticles := make([]Particle, len(s.particles))
+
 	for range separationIters {
-		toSeparate := []separationData{}
 		for i := range s.particles {
-			toSeparate = append(toSeparate, s.separateParticle(i, s.particles))
+			s.separateParticle(i, s.particles, newParticles)
 		}
-		for _, data := range toSeparate {
-			s.particles[data.id].pos[0] += data.dx
-			s.particles[data.id].pos[1] += data.dy
-		}
+		s.particles, newParticles = newParticles, s.particles
 	}
 }
 
-func (s *Simulation) separateParticle(i int, allParticles []Particle) separationData {
-	cellX := int(allParticles[i].pos[0] / GridSize)
-	cellY := int(allParticles[i].pos[1] / GridSize)
+func (s *Simulation) separateParticle(i int, currentParticles, newParticles []Particle) {
+	cellX := int(currentParticles[i].pos[0] / GridSize)
+	cellY := int(currentParticles[i].pos[1] / GridSize)
 
-	accumulatedX := 0.0
-	accumulatedY := 0.0
+	newParticles[i] = currentParticles[i]
 
 	for neighbourY := cellY - 1; neighbourY <= cellY+1; neighbourY++ {
 		for neighbourX := cellX - 1; neighbourX <= cellX+1; neighbourX++ {
@@ -678,8 +670,8 @@ func (s *Simulation) separateParticle(i int, allParticles []Particle) separation
 					continue
 				}
 
-				dx := allParticles[i].pos[0] - allParticles[s.particleLookup[otherParticle]].pos[0]
-				dy := allParticles[i].pos[1] - allParticles[s.particleLookup[otherParticle]].pos[1]
+				dx := currentParticles[i].pos[0] - currentParticles[s.particleLookup[otherParticle]].pos[0]
+				dy := currentParticles[i].pos[1] - currentParticles[s.particleLookup[otherParticle]].pos[1]
 				distSquared := dx*dx + dy*dy
 
 				if distSquared == 0 {
@@ -695,23 +687,11 @@ func (s *Simulation) separateParticle(i int, allParticles []Particle) separation
 
 					pushAmount := overlap * 0.5 * separationFactor
 
-					// s.particles[i].pos[0] += normalisedX * pushAmount
-					// s.particles[i].pos[1] += normalisedY * pushAmount
-
-					// s.particles[s.particleLookup[otherParticle]].pos[0] -= normalisedX * pushAmount
-					// s.particles[s.particleLookup[otherParticle]].pos[1] -= normalisedY * pushAmount
-
-					accumulatedX += normalisedX * pushAmount
-					accumulatedY += normalisedY * pushAmount
+					newParticles[i].pos[0] += normalisedX * pushAmount
+					newParticles[i].pos[1] += normalisedY * pushAmount
 				}
 			}
 		}
-	}
-
-	return separationData{
-		id: i,
-		dx: accumulatedX,
-		dy: accumulatedY,
 	}
 }
 
