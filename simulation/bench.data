@@ -69,3 +69,18 @@ BenchmarkTransferVelocityToParticles-8               200            488617 ns/op
 BenchmarkBuildSpacialHash-8                          200             77088 ns/op               0 B/op          0 allocs/op
 PASS
 ok      github.com/moltenwolfcub/fluidSim/simulation    12.353s
+
+==========MULTITHREADED BATCHED==========
+
+BenchmarkSimulate-8                                  200          11705178 ns/op          987548 B/op        109 allocs/op
+BenchmarkInitialise-8                                200             45527 ns/op               0 B/op          0 allocs/op
+BenchmarkIntegrateParticles-8                        200             20276 ns/op               0 B/op          0 allocs/op
+BenchmarkPushParticlesApart-8                        200           1382234 ns/op          328889 B/op         36 allocs/op
+BenchmarkHandleWallCollisons-8                       200             29582 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToGrid-8                    200            687345 ns/op               0 B/op          0 allocs/op
+BenchmarkUpdateParticleDensity-8                     200            195833 ns/op               0 B/op          0 allocs/op
+BenchmarkSolveIncompressibility-8                    200           1304485 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToParticles-8               200            502704 ns/op               0 B/op          0 allocs/op
+BenchmarkBuildSpacialHash-8                          200             78254 ns/op               0 B/op          0 allocs/op
+PASS
+ok      github.com/moltenwolfcub/fluidSim/simulation    7.402s
