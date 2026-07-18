@@ -13,6 +13,7 @@ PASS
 ok      github.com/moltenwolfcub/fluidSim/simulation    15.600s
 
 ==========PURE PUSH APART FUNCTION==========
+
 BenchmarkSimulate-8                                  200          25029382 ns/op
 BenchmarkInitialise-8                                200             64703 ns/op
 BenchmarkIntegrateParticles-8                        200             27856 ns/op
@@ -24,3 +25,17 @@ BenchmarkSolveIncompressibility-8                    200           1234793 ns/op
 BenchmarkTransferVelocityToParticles-8               200            518969 ns/op
 PASS
 ok      github.com/moltenwolfcub/fluidSim/simulation    17.538s
+
+==========ADJUSTED BENCHMARK FUNCTIONS==========
+
+BenchmarkSimulate-8                                  200          24476807 ns/op         6660000 B/op        111 allocs/op
+BenchmarkInitialise-8                                200             55480 ns/op               0 B/op          0 allocs/op
+BenchmarkIntegrateParticles-8                        200             20653 ns/op               0 B/op          0 allocs/op
+BenchmarkPushParticlesApart-8                        200           5102727 ns/op         2219970 B/op         37 allocs/op
+BenchmarkHandleWallCollisons-8                       200             26043 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToGrid-8                    200            732508 ns/op               0 B/op          0 allocs/op
+BenchmarkUpdateParticleDensity-8                     200            243335 ns/op               0 B/op          0 allocs/op
+BenchmarkSolveIncompressibility-8                    200           1204343 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToParticles-8               200            545512 ns/op               0 B/op          0 allocs/op
+PASS
+ok      github.com/moltenwolfcub/fluidSim/simulation    14.772s

@@ -44,23 +44,11 @@ func BenchmarkInitialise(b *testing.B) {
 
 	sim := NewSimulation()
 
-	sdt := (1.0 / 60.0) / float64(numSubSteps)
-
 	for b.Loop() {
 		sim.initialise()
-		b.StopTimer()
-
-		sim.integrateParticles(sdt, -1, -1)
-		sim.pushParticlesApart()
-		sim.handleWallCollisions()
-		sim.transferVelocityToGrid()
-		sim.updateParticleDensity()
-		sim.solveIncompressibility()
-		sim.transferVelocityToParticles()
-
-		b.StartTimer()
 	}
 }
+
 func BenchmarkIntegrateParticles(b *testing.B) {
 	setTestingParameters()
 
@@ -69,22 +57,7 @@ func BenchmarkIntegrateParticles(b *testing.B) {
 	sdt := (1.0 / 60.0) / float64(numSubSteps)
 
 	for b.Loop() {
-		b.StopTimer()
-
-		sim.initialise()
-
-		b.StartTimer()
 		sim.integrateParticles(sdt, -1, -1)
-		b.StopTimer()
-
-		sim.pushParticlesApart()
-		sim.handleWallCollisions()
-		sim.transferVelocityToGrid()
-		sim.updateParticleDensity()
-		sim.solveIncompressibility()
-		sim.transferVelocityToParticles()
-
-		b.StartTimer()
 	}
 }
 
