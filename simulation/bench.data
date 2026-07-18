@@ -39,3 +39,18 @@ BenchmarkSolveIncompressibility-8                    200           1204343 ns/op
 BenchmarkTransferVelocityToParticles-8               200            545512 ns/op               0 B/op          0 allocs/op
 PASS
 ok      github.com/moltenwolfcub/fluidSim/simulation    14.772s
+
+==========SPACIAL HASH TEST==========
+
+BenchmarkSimulate-8                                  200          24152988 ns/op         6659967 B/op        111 allocs/op
+BenchmarkInitialise-8                                200             46149 ns/op               0 B/op          0 allocs/op
+BenchmarkIntegrateParticles-8                        200             19709 ns/op               0 B/op          0 allocs/op
+BenchmarkPushParticlesApart-8                        200           4876548 ns/op         2219972 B/op         37 allocs/op
+BenchmarkHandleWallCollisons-8                       200             26373 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToGrid-8                    200            724253 ns/op               0 B/op          0 allocs/op
+BenchmarkUpdateParticleDensity-8                     200            223212 ns/op               0 B/op          0 allocs/op
+BenchmarkSolveIncompressibility-8                    200           1237601 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToParticles-8               200            523575 ns/op               0 B/op          0 allocs/op
+BenchmarkBuildSpacialHash-8                          200             79865 ns/op               0 B/op          0 allocs/op
+PASS
+ok      github.com/moltenwolfcub/fluidSim/simulation    14.292s

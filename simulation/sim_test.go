@@ -218,3 +218,13 @@ func BenchmarkTransferVelocityToParticles(b *testing.B) {
 		sim.transferVelocityToParticles()
 	}
 }
+
+func BenchmarkBuildSpacialHash(b *testing.B) {
+	setTestingParameters()
+
+	sim := NewSimulation()
+
+	for b.Loop() {
+		sim.buildSpacialHash()
+	}
+}
