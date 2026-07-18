@@ -129,3 +129,18 @@ BenchmarkTransferVelocityToParticles-8               200            350313 ns/op
 BenchmarkBuildSpacialHash-8                          200             76676 ns/op               0 B/op          0 allocs/op
 PASS
 ok      github.com/moltenwolfcub/fluidSim/simulation    6.280s
+
+==========MULTITHREADED GRID2PARTICLE==========
+
+BenchmarkSimulate-8                                  200           9896519 ns/op         1973943 B/op         85 allocs/op
+BenchmarkInitialise-8                                200             47063 ns/op               0 B/op          0 allocs/op
+BenchmarkIntegrateParticles-8                        200             20744 ns/op               0 B/op          0 allocs/op
+BenchmarkPushParticlesApart-8                        200           1254748 ns/op          329266 B/op         18 allocs/op
+BenchmarkHandleWallCollisons-8                       200             26266 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToGrid-8                    200            410289 ns/op               0 B/op          0 allocs/op
+BenchmarkUpdateParticleDensity-8                     200            188066 ns/op               0 B/op          0 allocs/op
+BenchmarkSolveIncompressibility-8                    200           1065061 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToParticles-8               200            246162 ns/op          328464 B/op         10 allocs/op
+BenchmarkBuildSpacialHash-8                          200             75492 ns/op               0 B/op          0 allocs/op
+PASS
+ok      github.com/moltenwolfcub/fluidSim/simulation    6.125s
