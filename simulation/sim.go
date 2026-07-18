@@ -6,7 +6,7 @@ import (
 	"math/rand"
 )
 
-const (
+var (
 	particleCount   int = 8000
 	numSubSteps     int = 2
 	pressureIters   int = 30
@@ -699,10 +699,10 @@ func (s *Simulation) buildSpacialHash() {
 		cy := int(s.particles[i].pos[1] / GridSize)
 
 		if cx < 0 || cx >= cellsW || cy < 0 || cy >= cellsH {
-			fmt.Println(cellsW, cellsH, "Out of bounds", cx, cy) //TODO TEMPORARY FIX FOR THIS OOB ERROR
+			// fmt.Println(cellsW, cellsH, "Out of bounds", cx, cy) //TODO TEMPORARY FIX FOR THIS OOB ERROR
 			cx = max(0, min(cx, cellsW-1))
 			cy = max(0, min(cy, cellsH-1))
-			fmt.Println("changed to:", cx, cy)
+			// fmt.Println("changed to:", cx, cy)
 		}
 
 		cellId := cy*cellsW + cx
@@ -723,10 +723,10 @@ func (s *Simulation) buildSpacialHash() {
 		cy := int(s.particles[i].pos[1] / GridSize)
 
 		if cx < 0 || cx >= cellsW || cy < 0 || cy >= cellsH {
-			fmt.Println(cellsW, cellsH, "Also Out of bounds", cx, cy)
+			// fmt.Println(cellsW, cellsH, "Also Out of bounds", cx, cy)
 			cx = max(0, min(cx, cellsW-1))
 			cy = max(0, min(cy, cellsH-1))
-			fmt.Println("changed to:", cx, cy)
+			// fmt.Println("changed to:", cx, cy)
 		}
 
 		cellId := cy*cellsW + cx
