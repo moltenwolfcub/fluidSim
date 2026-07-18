@@ -429,8 +429,6 @@ func (s *Simulation) solveIncompressibility() {
 
 func (s *Simulation) transferVelocityToParticles() {
 
-	newParticles := make([]Particle, len(s.particles))
-
 	var wg sync.WaitGroup
 	n := runtime.NumCPU()
 	particlesPerBatch := len(s.particles) / n
@@ -442,26 +440,23 @@ func (s *Simulation) transferVelocityToParticles() {
 			end = len(s.particles)
 		}
 		wg.Add(1)
-		go s.transferToParticleBatch(start, end, s.particles, newParticles, &wg)
+		go s.transferToParticleBatch(start, end, s.particles, &wg)
 	}
 	wg.Wait()
-	s.particles = newParticles
 }
 
-func (s *Simulation) transferToParticleBatch(start, end int, currentParticles, newParticles []Particle, wg *sync.WaitGroup) {
+func (s *Simulation) transferToParticleBatch(start, end int, currentParticles []Particle, wg *sync.WaitGroup) {
 	for i := start; i < end; i++ {
-		s.transferToParticle(i, currentParticles, newParticles)
+		s.transferToParticle(i, currentParticles)
 	}
 	wg.Done()
 }
 
-func (s *Simulation) transferToParticle(i int, currentParticles, newParticles []Particle) {
+func (s *Simulation) transferToParticle(i int, currentParticles []Particle) {
 	cx := int(math.Floor(currentParticles[i].pos[0] / GridSize))
 	cy := int(math.Floor(currentParticles[i].pos[1] / GridSize))
 	dx := currentParticles[i].pos[0] - float64(cx)*GridSize
 	dy := currentParticles[i].pos[1] - float64(cy)*GridSize
-
-	newParticles[i] = currentParticles[i]
 
 	rightNeighbour := cy*cellsW + cx + 1
 	var verticalNeighbour int
@@ -570,7 +565,7 @@ func (s *Simulation) transferToParticle(i int, currentParticles, newParticles []
 			valid4u*w4u*(s.grid[c4u].u-s.grid[c4u].prevU)) / wu
 		flipV := pVelX + corr
 
-		newParticles[i].vel[0] = (1.0-flipRatio)*picV + flipRatio*flipV
+		currentParticles[i].vel[0] = (1.0-flipRatio)*picV + flipRatio*flipV
 	}
 
 	valid1v, valid2v, valid3v, valid4v := 0.0, 0.0, 0.0, 0.0
@@ -597,7 +592,7 @@ func (s *Simulation) transferToParticle(i int, currentParticles, newParticles []
 			valid4v*w4v*(s.grid[c4v].v-s.grid[c4v].prevV)) / wv
 		flipV := pVelY + corr
 
-		newParticles[i].vel[1] = (1.0-flipRatio)*picV + flipRatio*flipV
+		currentParticles[i].vel[1] = (1.0-flipRatio)*picV + flipRatio*flipV
 	}
 }
 
