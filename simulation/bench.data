@@ -1,0 +1,5 @@
+==========AS OF ADDING BENCHMARKS==========
+
+BenchmarkSimulate-8                          200          20781524 ns/op
+BenchmarkPushParticlesApart-8                200           3930058 ns/op
+BenchmarkSolveIncompressibility-8            200           1223481 ns/op
