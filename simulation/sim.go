@@ -56,9 +56,9 @@ func (p Particle) GetPos() (x, y float64) {
 type CellType int
 
 const (
-	Air CellType = iota
-	Water
-	Solid
+	Solid CellType = 0
+	Air   CellType = 1
+	Water CellType = 2
 )
 
 type Cell struct {
@@ -67,7 +67,7 @@ type Cell struct {
 	u, v                       float64 // U is the cell's left velocity and V is the cell's up velocity
 	totalWeightU, totalWeightV float64
 	prevU, prevV               float64
-	canContainFluid            bool
+	canContainFluid            float64 //boolean 1:true, 0:false
 	particleDensity            float64
 }
 
@@ -76,7 +76,7 @@ func (c Cell) GetPos() (x, y int) {
 }
 
 func (c Cell) Solid() bool {
-	return !c.canContainFluid
+	return c.canContainFluid == 0
 }
 
 type Simulation struct {
@@ -109,9 +109,9 @@ func NewSimulation() *Simulation {
 				u:        0,
 				v:        0,
 			}
-			c.canContainFluid = true
+			c.canContainFluid = 1
 			if i == 0 || i == cellsW-1 || j == cellsH-1 || j == 0 {
-				c.canContainFluid = false
+				c.canContainFluid = 0
 				c.cellType = Solid
 			}
 
@@ -128,7 +128,6 @@ func (s *Simulation) addRandomParticles(count int) {
 		for range count {
 			s.particles = append(s.particles, Particle{
 				pos: [2]float64{1 + r.Float64()*2, GridSize + r.Float64()*1},
-				// pos: [2]float64{rand.Float64() * Width, rand.Float64() * Height},
 				vel: [2]float64{0, 0},
 			})
 		}
@@ -136,7 +135,6 @@ func (s *Simulation) addRandomParticles(count int) {
 		for range count {
 			s.particles = append(s.particles, Particle{
 				pos: [2]float64{1 + rand.Float64()*2, GridSize + rand.Float64()*1},
-				// pos: [2]float64{rand.Float64() * Width, rand.Float64() * Height},
 				vel: [2]float64{0, 0},
 			})
 		}
@@ -179,11 +177,8 @@ func (s *Simulation) initialise() {
 		s.grid[i].totalWeightU = 0
 		s.grid[i].totalWeightV = 0
 
-		if s.grid[i].canContainFluid {
-			s.grid[i].cellType = Air
-		} else {
-			s.grid[i].cellType = Solid
-		}
+		//hacky way to convert. canContainFluid 1/0 corresponds with CellType IDs
+		s.grid[i].cellType = CellType(s.grid[i].canContainFluid)
 
 		s.grid[i].particleDensity = 0
 	}
@@ -361,14 +356,14 @@ func (s *Simulation) transferVelocityToGrid() {
 		// revert solid edges to previous velocity
 		// otherwise normalilse velocity by totalWeight
 
-		if !s.grid[i].canContainFluid || (s.grid[i].coord[0] > 0 && !s.grid[i-1].canContainFluid) {
+		if s.grid[i].canContainFluid == 0 || (s.grid[i].coord[0] > 0 && s.grid[i-1].canContainFluid == 0) {
 			s.grid[i].u = s.grid[i].prevU
 
 		} else if s.grid[i].totalWeightU > 0 {
 			s.grid[i].u /= s.grid[i].totalWeightU
 
 		}
-		if !s.grid[i].canContainFluid || (s.grid[i].coord[1] > 0 && !s.grid[(s.grid[i].coord[1]-1)*cellsW+s.grid[i].coord[0]].canContainFluid) {
+		if s.grid[i].canContainFluid == 0 || (s.grid[i].coord[1] > 0 && s.grid[(s.grid[i].coord[1]-1)*cellsW+s.grid[i].coord[0]].canContainFluid == 0) {
 			s.grid[i].v = s.grid[i].prevV
 
 		} else if s.grid[i].totalWeightV > 0 {
@@ -387,11 +382,13 @@ func (s *Simulation) solveIncompressibility() {
 	for range pressureIters {
 		for j := 1; j < cellsH-1; j++ {
 			for i := 1; i < cellsW-1; i++ {
-				if s.grid[j*cellsW+i].cellType != Water {
+
+				center := j*cellsW + i
+
+				if s.grid[center].cellType != Water {
 					continue
 				}
 
-				center := j*cellsW + i
 				up := (j-1)*cellsW + i
 				down := (j+1)*cellsW + i
 				left := j*cellsW + i - 1
@@ -402,19 +399,8 @@ func (s *Simulation) solveIncompressibility() {
 					continue
 				}
 
-				openNeighbours := 0
-				if s.grid[up].canContainFluid {
-					openNeighbours++
-				}
-				if s.grid[down].canContainFluid {
-					openNeighbours++
-				}
-				if s.grid[left].canContainFluid {
-					openNeighbours++
-				}
-				if s.grid[right].canContainFluid {
-					openNeighbours++
-				}
+				openNeighbours := s.grid[up].canContainFluid + s.grid[down].canContainFluid +
+					s.grid[left].canContainFluid + s.grid[right].canContainFluid
 				if openNeighbours == 0 {
 					continue
 				}
@@ -426,22 +412,14 @@ func (s *Simulation) solveIncompressibility() {
 					}
 				}
 
-				p := divergence / float64(openNeighbours)
+				p := divergence / openNeighbours
 
 				p *= overrelaxation
 
-				if s.grid[right].canContainFluid {
-					s.grid[right].u -= p
-				}
-				if s.grid[left].canContainFluid {
-					s.grid[center].u += p
-				}
-				if s.grid[up].canContainFluid {
-					s.grid[center].v += p
-				}
-				if s.grid[down].canContainFluid {
-					s.grid[down].v -= p
-				}
+				s.grid[right].u -= p * s.grid[right].canContainFluid
+				s.grid[center].u += p * s.grid[left].canContainFluid
+				s.grid[center].v += p * s.grid[up].canContainFluid
+				s.grid[down].v -= p * s.grid[down].canContainFluid
 			}
 		}
 	}
