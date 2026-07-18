@@ -643,15 +643,9 @@ func (s *Simulation) pushParticlesApart() {
 
 	newParticles := make([]Particle, len(s.particles))
 
+	var wg sync.WaitGroup
 	for range separationIters {
-		var wg sync.WaitGroup
 		n := runtime.NumCPU()
-		// ch := make(chan int)
-		// for range 2 {
-		// 	wg.Go(func() {
-		// 		s.separateParticleWorker(ch, &s.particles, &newParticles)
-		// 	})
-		// }
 		particlesPerBatch := len(s.particles) / n
 		for i := range n {
 			start := particlesPerBatch * i
@@ -659,32 +653,19 @@ func (s *Simulation) pushParticlesApart() {
 			if i == n-1 {
 				end = len(s.particles)
 			}
-			wg.Go(func() {
-				s.separateParticleBatch(start, end, s.particles, newParticles)
-			})
+			wg.Add(1)
+			go s.separateParticleBatch(start, end, s.particles, newParticles, &wg)
 		}
-		// for i := range s.particles {
-		// 	ch <- i
-		// 		wg.Go(func() {
-		// 			s.separateParticle(i, s.particles, newParticles)
-		// 		})
-		// }
-		// close(ch)
 		wg.Wait()
 		s.particles, newParticles = newParticles, s.particles
 	}
 }
 
-// func (s *Simulation) separateParticleWorker(indexes <-chan int, currentParticles, newParticles *[]Particle) {
-// 	for i := range indexes {
-// 		s.separateParticle(i, *currentParticles, *newParticles)
-// 	}
-// }
-
-func (s *Simulation) separateParticleBatch(start, end int, currentParticles, newParticles []Particle) {
+func (s *Simulation) separateParticleBatch(start, end int, currentParticles, newParticles []Particle, wg *sync.WaitGroup) {
 	for i := start; i < end; i++ {
 		s.separateParticle(i, currentParticles, newParticles)
 	}
+	wg.Done()
 }
 
 func (s *Simulation) separateParticle(i int, currentParticles, newParticles []Particle) {
