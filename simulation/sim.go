@@ -636,57 +636,82 @@ func (s *Simulation) updateParticleDensity() {
 	}
 }
 
+type separationData struct {
+	id     int
+	dx, dy float64
+}
+
 func (s *Simulation) pushParticlesApart() {
 	s.buildSpacialHash()
 
 	for range separationIters {
+		toSeparate := []separationData{}
 		for i := range s.particles {
-			cellX := int(s.particles[i].pos[0] / GridSize)
-			cellY := int(s.particles[i].pos[1] / GridSize)
+			toSeparate = append(toSeparate, s.separateParticle(i, s.particles))
+		}
+		for _, data := range toSeparate {
+			s.particles[data.id].pos[0] += data.dx
+			s.particles[data.id].pos[1] += data.dy
+		}
+	}
+}
 
-			for neighbourY := cellY - 1; neighbourY <= cellY+1; neighbourY++ {
-				for neighbourX := cellX - 1; neighbourX <= cellX+1; neighbourX++ {
-					if neighbourX < 0 || neighbourX >= cellsW || neighbourY < 0 || neighbourY >= cellsH {
-						continue
-					}
-					id := neighbourY*cellsW + neighbourX
+func (s *Simulation) separateParticle(i int, allParticles []Particle) separationData {
+	cellX := int(allParticles[i].pos[0] / GridSize)
+	cellY := int(allParticles[i].pos[1] / GridSize)
 
-					firstParticle := s.cellAccumulatedParticles[id]  //number of particles before this cell
-					lastParticle := s.cellAccumulatedParticles[id+1] //number of particles before next cell
+	accumulatedX := 0.0
+	accumulatedY := 0.0
 
-					for otherParticle := firstParticle; otherParticle < lastParticle; otherParticle++ {
-						if i == s.particleLookup[otherParticle] {
-							continue
-						}
+	for neighbourY := cellY - 1; neighbourY <= cellY+1; neighbourY++ {
+		for neighbourX := cellX - 1; neighbourX <= cellX+1; neighbourX++ {
+			if neighbourX < 0 || neighbourX >= cellsW || neighbourY < 0 || neighbourY >= cellsH {
+				continue
+			}
+			id := neighbourY*cellsW + neighbourX
 
-						dx := s.particles[i].pos[0] - s.particles[s.particleLookup[otherParticle]].pos[0]
-						dy := s.particles[i].pos[1] - s.particles[s.particleLookup[otherParticle]].pos[1]
-						distSquared := dx*dx + dy*dy
+			firstParticle := s.cellAccumulatedParticles[id]  //number of particles before this cell
+			lastParticle := s.cellAccumulatedParticles[id+1] //number of particles before next cell
 
-						if distSquared == 0 {
-							continue
-						}
+			for otherParticle := firstParticle; otherParticle < lastParticle; otherParticle++ {
+				if i == s.particleLookup[otherParticle] {
+					continue
+				}
 
-						if distSquared < 4*Radius*Radius {
-							dist := math.Sqrt(distSquared)
-							overlap := 2*Radius - dist
+				dx := allParticles[i].pos[0] - allParticles[s.particleLookup[otherParticle]].pos[0]
+				dy := allParticles[i].pos[1] - allParticles[s.particleLookup[otherParticle]].pos[1]
+				distSquared := dx*dx + dy*dy
 
-							normalisedX := dx / dist
-							normalisedY := dy / dist
+				if distSquared == 0 {
+					continue
+				}
 
-							pushAmount := overlap * 0.5 * separationFactor
+				if distSquared < 4*Radius*Radius {
+					dist := math.Sqrt(distSquared)
+					overlap := 2*Radius - dist
 
-							s.particles[i].pos[0] += normalisedX * pushAmount
-							s.particles[i].pos[1] += normalisedY * pushAmount
+					normalisedX := dx / dist
+					normalisedY := dy / dist
 
-							s.particles[s.particleLookup[otherParticle]].pos[0] -= normalisedX * pushAmount
-							s.particles[s.particleLookup[otherParticle]].pos[1] -= normalisedY * pushAmount
-						}
-					}
+					pushAmount := overlap * 0.5 * separationFactor
+
+					// s.particles[i].pos[0] += normalisedX * pushAmount
+					// s.particles[i].pos[1] += normalisedY * pushAmount
+
+					// s.particles[s.particleLookup[otherParticle]].pos[0] -= normalisedX * pushAmount
+					// s.particles[s.particleLookup[otherParticle]].pos[1] -= normalisedY * pushAmount
+
+					accumulatedX += normalisedX * pushAmount
+					accumulatedY += normalisedY * pushAmount
 				}
 			}
-
 		}
+	}
+
+	return separationData{
+		id: i,
+		dx: accumulatedX,
+		dy: accumulatedY,
 	}
 }
 
