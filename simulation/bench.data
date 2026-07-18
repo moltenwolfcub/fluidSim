@@ -114,3 +114,18 @@ BenchmarkTransferVelocityToParticles-8               200            480270 ns/op
 BenchmarkBuildSpacialHash-8                          200            106511 ns/op               0 B/op          0 allocs/op
 PASS
 ok      github.com/moltenwolfcub/fluidSim/simulation    6.843s
+
+==========REMOVED PARTICLETOCELL HELPER FUNC==========
+
+BenchmarkSimulate-8                                  200          10627245 ns/op          988572 B/op         55 allocs/op
+BenchmarkInitialise-8                                200             52812 ns/op               0 B/op          0 allocs/op
+BenchmarkIntegrateParticles-8                        200             19708 ns/op               0 B/op          0 allocs/op
+BenchmarkPushParticlesApart-8                        200           1313961 ns/op          329295 B/op         18 allocs/op
+BenchmarkHandleWallCollisons-8                       200             27086 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToGrid-8                    200            410452 ns/op               0 B/op          0 allocs/op
+BenchmarkUpdateParticleDensity-8                     200            188681 ns/op               0 B/op          0 allocs/op
+BenchmarkSolveIncompressibility-8                    200           1052434 ns/op               0 B/op          0 allocs/op
+BenchmarkTransferVelocityToParticles-8               200            350313 ns/op               0 B/op          0 allocs/op
+BenchmarkBuildSpacialHash-8                          200             76676 ns/op               0 B/op          0 allocs/op
+PASS
+ok      github.com/moltenwolfcub/fluidSim/simulation    6.280s

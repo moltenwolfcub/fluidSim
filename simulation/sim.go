@@ -235,47 +235,49 @@ func (s *Simulation) handleWallCollisions() {
 
 func (s *Simulation) transferVelocityToGrid() {
 	for i := range s.particles {
-		cell := s.particleToCell(s.particles[i])
-		if cell.cellType == Air {
-			s.grid[cell.coord[1]*cellsW+cell.coord[0]].cellType = Water
+		xCell := int(math.Floor(s.particles[i].pos[0] / GridSize))
+		yCell := int(math.Floor(s.particles[i].pos[1] / GridSize))
+
+		cid := yCell*cellsW + xCell
+		if s.grid[cid].cellType == Air {
+			s.grid[cid].cellType = Water
 		}
 
-		c := s.particleToCell(s.particles[i])
-		dx := s.particles[i].pos[0] - float64(c.coord[0])*GridSize
-		dy := s.particles[i].pos[1] - float64(c.coord[1])*GridSize
+		dx := s.particles[i].pos[0] - float64(xCell)*GridSize
+		dy := s.particles[i].pos[1] - float64(yCell)*GridSize
 
 		// u neighbours
-		rightNeighbour := c.coord[1]*cellsW + c.coord[0] + 1
+		rightNeighbour := yCell*cellsW + xCell + 1
 		var verticalNeighbour int
 		var verticalRightNeighbour int
 		inUpper := dy < GridSize/2
 		if inUpper {
-			targetY := max(c.coord[1]-1, 0)
+			targetY := max(yCell-1, 0)
 
-			verticalNeighbour = targetY*cellsW + c.coord[0]
-			verticalRightNeighbour = targetY*cellsW + c.coord[0] + 1
+			verticalNeighbour = targetY*cellsW + xCell
+			verticalRightNeighbour = targetY*cellsW + xCell + 1
 		} else {
-			targetY := min(c.coord[1]+1, cellsH-1)
+			targetY := min(yCell+1, cellsH-1)
 
-			verticalNeighbour = targetY*cellsW + c.coord[0]
-			verticalRightNeighbour = targetY*cellsW + c.coord[0] + 1
+			verticalNeighbour = targetY*cellsW + xCell
+			verticalRightNeighbour = targetY*cellsW + xCell + 1
 		}
 
 		// v neighbours
-		belowNeighbour := (c.coord[1]+1)*cellsW + c.coord[0]
+		belowNeighbour := (yCell+1)*cellsW + xCell
 		var horizontalNeighbour int
 		var horizontalBelowNeighbour int
 		inLeft := dx < GridSize/2
 		if inLeft {
-			targetX := max(c.coord[0]-1, 0)
+			targetX := max(xCell-1, 0)
 
-			horizontalNeighbour = c.coord[1]*cellsW + targetX
-			horizontalBelowNeighbour = (c.coord[1]+1)*cellsW + targetX
+			horizontalNeighbour = yCell*cellsW + targetX
+			horizontalBelowNeighbour = (yCell+1)*cellsW + targetX
 		} else {
-			targetX := min(c.coord[0]+1, cellsW-1)
+			targetX := min(xCell+1, cellsW-1)
 
-			horizontalNeighbour = c.coord[1]*cellsW + targetX
-			horizontalBelowNeighbour = (c.coord[1]+1)*cellsW + targetX
+			horizontalNeighbour = yCell*cellsW + targetX
+			horizontalBelowNeighbour = (yCell+1)*cellsW + targetX
 		}
 
 		var c1u, c2u, c3u, c4u int
@@ -286,7 +288,7 @@ func (s *Simulation) transferVelocityToGrid() {
 
 		// orient u
 		if inUpper {
-			c1u = c.coord[1]*cellsW + c.coord[0]
+			c1u = yCell*cellsW + xCell
 			c2u = rightNeighbour
 			c3u = verticalRightNeighbour
 			c4u = verticalNeighbour
@@ -296,7 +298,7 @@ func (s *Simulation) transferVelocityToGrid() {
 			c1u = verticalNeighbour
 			c2u = verticalRightNeighbour
 			c3u = rightNeighbour
-			c4u = c.coord[1]*cellsW + c.coord[0]
+			c4u = yCell*cellsW + xCell
 
 			tyu = (dy / GridSize) - 0.5
 		}
@@ -304,7 +306,7 @@ func (s *Simulation) transferVelocityToGrid() {
 		if inLeft {
 			c1v = horizontalBelowNeighbour
 			c2v = belowNeighbour
-			c3v = c.coord[1]*cellsW + c.coord[0]
+			c3v = yCell*cellsW + xCell
 			c4v = horizontalNeighbour
 
 			txv = (dx / GridSize) + 0.5
@@ -312,7 +314,7 @@ func (s *Simulation) transferVelocityToGrid() {
 			c1v = belowNeighbour
 			c2v = horizontalBelowNeighbour
 			c3v = horizontalNeighbour
-			c4v = c.coord[1]*cellsW + c.coord[0]
+			c4v = yCell*cellsW + xCell
 
 			txv = (dx / GridSize) - 0.5
 		}
@@ -428,40 +430,41 @@ func (s *Simulation) solveIncompressibility() {
 func (s *Simulation) transferVelocityToParticles() {
 
 	for i := range s.particles {
-		c := s.particleToCell(s.particles[i])
-		dx := s.particles[i].pos[0] - float64(c.coord[0])*GridSize
-		dy := s.particles[i].pos[1] - float64(c.coord[1])*GridSize
+		cx := int(math.Floor(s.particles[i].pos[0] / GridSize))
+		cy := int(math.Floor(s.particles[i].pos[1] / GridSize))
+		dx := s.particles[i].pos[0] - float64(cx)*GridSize
+		dy := s.particles[i].pos[1] - float64(cy)*GridSize
 
-		rightNeighbour := c.coord[1]*cellsW + c.coord[0] + 1
+		rightNeighbour := cy*cellsW + cx + 1
 		var verticalNeighbour int
 		var verticalRightNeighbour int
 		inUpper := dy < GridSize/2
 		if inUpper {
-			targetY := max(c.coord[1]-1, 0)
+			targetY := max(cy-1, 0)
 
-			verticalNeighbour = targetY*cellsW + c.coord[0]
-			verticalRightNeighbour = targetY*cellsW + c.coord[0] + 1
+			verticalNeighbour = targetY*cellsW + cx
+			verticalRightNeighbour = targetY*cellsW + cx + 1
 		} else {
-			targetY := min(c.coord[1]+1, cellsH-1)
+			targetY := min(cy+1, cellsH-1)
 
-			verticalNeighbour = targetY*cellsW + c.coord[0]
-			verticalRightNeighbour = targetY*cellsW + c.coord[0] + 1
+			verticalNeighbour = targetY*cellsW + cx
+			verticalRightNeighbour = targetY*cellsW + cx + 1
 		}
 
-		belowNeighbour := (c.coord[1]+1)*cellsW + c.coord[0]
+		belowNeighbour := (cy+1)*cellsW + cx
 		var horizontalNeighbour int
 		var horizontalBelowNeighbour int
 		inLeft := dx < GridSize/2
 		if inLeft {
-			targetX := max(c.coord[0]-1, 0)
+			targetX := max(cx-1, 0)
 
-			horizontalNeighbour = c.coord[1]*cellsW + targetX
-			horizontalBelowNeighbour = (c.coord[1]+1)*cellsW + targetX
+			horizontalNeighbour = cy*cellsW + targetX
+			horizontalBelowNeighbour = (cy+1)*cellsW + targetX
 		} else {
-			targetX := min(c.coord[0]+1, cellsW-1)
+			targetX := min(cx+1, cellsW-1)
 
-			horizontalNeighbour = c.coord[1]*cellsW + targetX
-			horizontalBelowNeighbour = (c.coord[1]+1)*cellsW + targetX
+			horizontalNeighbour = cy*cellsW + targetX
+			horizontalBelowNeighbour = (cy+1)*cellsW + targetX
 		}
 
 		var c1u, c2u, c3u, c4u int
@@ -471,7 +474,7 @@ func (s *Simulation) transferVelocityToParticles() {
 		tyv := dy / GridSize
 
 		if inUpper {
-			c1u = c.coord[1]*cellsW + c.coord[0]
+			c1u = cy*cellsW + cx
 			c2u = rightNeighbour
 			c3u = verticalRightNeighbour
 			c4u = verticalNeighbour
@@ -481,7 +484,7 @@ func (s *Simulation) transferVelocityToParticles() {
 			c1u = verticalNeighbour
 			c2u = verticalRightNeighbour
 			c3u = rightNeighbour
-			c4u = c.coord[1]*cellsW + c.coord[0]
+			c4u = cy*cellsW + cx
 
 			tyu = tyv - 0.5
 		}
@@ -489,7 +492,7 @@ func (s *Simulation) transferVelocityToParticles() {
 		if inLeft {
 			c1v = horizontalBelowNeighbour
 			c2v = belowNeighbour
-			c3v = c.coord[1]*cellsW + c.coord[0]
+			c3v = cy*cellsW + cx
 			c4v = horizontalNeighbour
 
 			txv = txu + 0.5
@@ -497,7 +500,7 @@ func (s *Simulation) transferVelocityToParticles() {
 			c1v = belowNeighbour
 			c2v = horizontalBelowNeighbour
 			c3v = horizontalNeighbour
-			c4v = c.coord[1]*cellsW + c.coord[0]
+			c4v = cy*cellsW + cx
 
 			txv = txu - 0.5
 		}
@@ -743,13 +746,4 @@ func (s *Simulation) buildSpacialHash() {
 		s.cellAccumulatedParticles[i] = s.cellAccumulatedParticles[i-1] // restore accumulated count
 	}
 	s.cellAccumulatedParticles[0] = 0
-}
-
-func (s *Simulation) particleToCell(p Particle) Cell {
-	x, y := p.GetPos()
-
-	xCell := int(math.Floor(x / GridSize))
-	yCell := int(math.Floor(y / GridSize))
-
-	return s.grid[yCell*cellsW+xCell]
 }
