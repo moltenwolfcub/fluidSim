@@ -677,9 +677,16 @@ func (s *Simulation) separateParticle(i int, currentParticles, newParticles []Pa
 
 	newParticles[i] = currentParticles[i]
 
+	diameter := 2 * Radius
+	diameterSquared := 4 * Radius * Radius
+	halfSeparation := 0.5 * separationFactor
+
 	for neighbourY := cellY - 1; neighbourY <= cellY+1; neighbourY++ {
+		if neighbourY < 0 || neighbourY >= cellsH {
+			continue
+		}
 		for neighbourX := cellX - 1; neighbourX <= cellX+1; neighbourX++ {
-			if neighbourX < 0 || neighbourX >= cellsW || neighbourY < 0 || neighbourY >= cellsH {
+			if neighbourX < 0 || neighbourX >= cellsW {
 				continue
 			}
 			id := neighbourY*cellsW + neighbourX
@@ -696,22 +703,17 @@ func (s *Simulation) separateParticle(i int, currentParticles, newParticles []Pa
 				dy := currentParticles[i].pos[1] - currentParticles[s.particleLookup[otherParticle]].pos[1]
 				distSquared := dx*dx + dy*dy
 
-				if distSquared == 0 {
+				if distSquared == 0 || distSquared >= diameterSquared {
 					continue
 				}
 
-				if distSquared < 4*Radius*Radius {
-					dist := math.Sqrt(distSquared)
-					overlap := 2*Radius - dist
+				dist := math.Sqrt(distSquared)
+				overlap := diameter - dist
 
-					normalisedX := dx / dist
-					normalisedY := dy / dist
+				normalisedPushAmount := overlap * halfSeparation / dist
 
-					pushAmount := overlap * 0.5 * separationFactor
-
-					newParticles[i].pos[0] += normalisedX * pushAmount
-					newParticles[i].pos[1] += normalisedY * pushAmount
-				}
+				newParticles[i].pos[0] += dx * normalisedPushAmount
+				newParticles[i].pos[1] += dy * normalisedPushAmount
 			}
 		}
 	}
